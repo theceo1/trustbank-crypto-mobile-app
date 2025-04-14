@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Save, RotateCcw } from "lucide-react";
@@ -98,8 +97,13 @@ const CalculatorPage = () => {
       setPreviousValue(inputValue);
     } else if (operation) {
       const result = calculate(previousValue, inputValue, operation);
-      setPreviousValue(result);
-      setDisplay(String(result));
+      if (typeof result === 'number') {
+        setPreviousValue(result);
+        setDisplay(String(result));
+      } else {
+        setPreviousValue(null);
+        setDisplay(result);
+      }
     }
     
     setWaitingForOperand(true);

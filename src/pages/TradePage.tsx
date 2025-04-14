@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Select, 
   SelectContent, 
@@ -49,6 +50,7 @@ const mockChartData = [
 
 const TradePage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPair, setSelectedPair] = useState("BTC/USDT");
   const [tradeType, setTradeType] = useState("buy");

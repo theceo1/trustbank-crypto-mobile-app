@@ -10,6 +10,7 @@ interface Env {
   QUIDAX_PUBLIC_KEY: string;
   ENABLE_ANALYTICS: boolean;
   MAINTENANCE_MODE: boolean;
+  SITE_URL: string; // Added this property
 }
 
 // In a production app, you would use a proper .env solution with Expo
@@ -25,4 +26,5 @@ export const env: Env = {
   QUIDAX_PUBLIC_KEY: "wxJ5qUShutXT5hwv98fRLzSJ7MxnrgFwB768zFUL",
   ENABLE_ANALYTICS: true,
   MAINTENANCE_MODE: false,
+  SITE_URL: "http://localhost:3000", // Added this value
 };
