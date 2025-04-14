@@ -23,6 +23,13 @@ const BiometricPrompt = ({
 }: BiometricPromptProps) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
+  // Prevent the component from immediately closing when rendered
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
+  };
+
   // Simulate biometric authentication
   useEffect(() => {
     if (isAuthenticating) {
@@ -47,7 +54,7 @@ const BiometricPrompt = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
