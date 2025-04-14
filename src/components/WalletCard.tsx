@@ -26,7 +26,7 @@ const WalletCard: React.FC<WalletCardProps> = ({
 }) => {
   return (
     <Card 
-      className={cn("wallet-card animate-fade-in", className)}
+      className={cn("wallet-card", className)}
       style={style}
       onClick={onClick}
     >
