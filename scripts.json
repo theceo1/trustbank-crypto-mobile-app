@@ -1,0 +1,6 @@
+
+{
+  "ios:setup": "node ios-setup.js",
+  "ios:sync": "npm run build && npx cap sync ios",
+  "ios:live": "npm run build && npx cap sync ios && npx cap open ios"
+}
