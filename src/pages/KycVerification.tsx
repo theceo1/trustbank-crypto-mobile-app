@@ -1,487 +1,299 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { ChevronLeft, Camera, Upload, AlertTriangle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Camera, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import Logo from "@/components/Logo";
-
-// KYC Verification Steps
-type Step = "document" | "personal" | "selfie" | "review";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const KycVerification = () => {
-  const [currentStep, setCurrentStep] = useState<Step>("document");
-  const [documentType, setDocumentType] = useState("");
-  const [documentNumber, setDocumentNumber] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [frontImage, setFrontImage] = useState<string | null>(null);
-  const [backImage, setBackImage] = useState<string | null>(null);
-  const [selfieImage, setSelfieImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("id-verification");
+  const [idType, setIdType] = useState("passport");
+  const [loading, setLoading] = useState(false);
 
-  const handleNext = () => {
-    if (currentStep === "document") {
-      if (!documentType || !documentNumber || !frontImage || !backImage) {
-        toast({
-          title: "Missing Information",
-          description: "Please complete all document fields.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setCurrentStep("personal");
-    } else if (currentStep === "personal") {
-      if (!firstName || !lastName || !dateOfBirth) {
-        toast({
-          title: "Missing Information",
-          description: "Please complete all personal information fields.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setCurrentStep("selfie");
-    } else if (currentStep === "selfie") {
-      if (!selfieImage) {
-        toast({
-          title: "Missing Information",
-          description: "Please take or upload a selfie.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setCurrentStep("review");
-    }
+  // Mock verification states
+  const [selfieUploaded, setSelfieUploaded] = useState(false);
+  const [frontUploaded, setFrontUploaded] = useState(false);
+  const [backUploaded, setBackUploaded] = useState(false);
+  const [addressUploaded, setAddressUploaded] = useState(false);
+  
+  // Handle document type selection
+  const handleIdTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setIdType(e.target.value);
   };
 
-  const handleBack = () => {
-    if (currentStep === "personal") {
-      setCurrentStep("document");
-    } else if (currentStep === "selfie") {
-      setCurrentStep("personal");
-    } else if (currentStep === "review") {
-      setCurrentStep("selfie");
-    }
-  };
-
-  const handleUploadImage = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "front" | "back" | "selfie"
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (type === "front") setFrontImage(reader.result as string);
-      else if (type === "back") setBackImage(reader.result as string);
-      else setSelfieImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleSubmit = async () => {
+  // Mock file upload handler
+  const handleFileUpload = (type: string) => {
     setLoading(true);
-
-    // In a real app, this would send the data to your backend which would call the Dojah API
-    // For this demo, we'll simulate a successful verification after a delay
+    
+    // Simulate API call delay
     setTimeout(() => {
       setLoading(false);
+      
+      switch(type) {
+        case "selfie":
+          setSelfieUploaded(true);
+          break;
+        case "front":
+          setFrontUploaded(true);
+          break;
+        case "back":
+          setBackUploaded(true);
+          break;
+        case "address":
+          setAddressUploaded(true);
+          break;
+      }
+      
       toast({
-        title: "Verification Submitted",
-        description: "Your identity verification request has been submitted for review.",
+        title: "File uploaded",
+        description: "Your document has been uploaded successfully.",
       });
+    }, 2000);
+  };
+
+  // Submit verification
+  const handleSubmitVerification = () => {
+    setLoading(true);
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      setLoading(false);
       navigate("/verification-pending");
     }, 2000);
   };
 
-  const renderStepIndicator = () => {
-    const steps = ["document", "personal", "selfie", "review"];
-    const currentIndex = steps.indexOf(currentStep);
-
-    return (
-      <div className="flex justify-center space-x-2 mb-8">
-        {steps.map((step, index) => (
-          <div
-            key={step}
-            className={`h-2 w-12 rounded-full ${
-              index <= currentIndex
-                ? "bg-brand-600"
-                : "bg-gray-200 dark:bg-gray-700"
-            }`}
-          ></div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderDocumentStep = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="documentType">Document Type</Label>
-        <Select value={documentType} onValueChange={setDocumentType}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select ID type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="passport">Passport</SelectItem>
-            <SelectItem value="national_id">National ID Card</SelectItem>
-            <SelectItem value="drivers_license">Driver's License</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="documentNumber">Document Number</Label>
-        <Input
-          id="documentNumber"
-          value={documentNumber}
-          onChange={(e) => setDocumentNumber(e.target.value)}
-          placeholder="Enter document number"
-        />
-      </div>
-
-      <div className="space-y-4">
-        <Label>Upload Document Images</Label>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4 flex flex-col items-center justify-center text-center">
-            <div
-              className={`w-full aspect-video bg-muted rounded-lg mb-3 flex items-center justify-center overflow-hidden ${
-                frontImage ? "" : "border-2 border-dashed border-border"
-              }`}
-            >
-              {frontImage ? (
-                <img
-                  src={frontImage}
-                  alt="ID Front"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Upload className="h-10 w-10 text-muted-foreground" />
-              )}
-            </div>
-            <p className="text-sm font-medium mb-2">Front side</p>
-            <div className="w-full">
-              <input
-                type="file"
-                id="front-image"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleUploadImage(e, "front")}
-              />
-              <label htmlFor="front-image">
-                <Button variant="outline" size="sm" className="w-full" as="span">
-                  {frontImage ? "Replace" : "Upload"}
-                </Button>
-              </label>
-            </div>
-          </Card>
-
-          <Card className="p-4 flex flex-col items-center justify-center text-center">
-            <div
-              className={`w-full aspect-video bg-muted rounded-lg mb-3 flex items-center justify-center overflow-hidden ${
-                backImage ? "" : "border-2 border-dashed border-border"
-              }`}
-            >
-              {backImage ? (
-                <img
-                  src={backImage}
-                  alt="ID Back"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Upload className="h-10 w-10 text-muted-foreground" />
-              )}
-            </div>
-            <p className="text-sm font-medium mb-2">Back side</p>
-            <div className="w-full">
-              <input
-                type="file"
-                id="back-image"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleUploadImage(e, "back")}
-              />
-              <label htmlFor="back-image">
-                <Button variant="outline" size="sm" className="w-full" as="span">
-                  {backImage ? "Replace" : "Upload"}
-                </Button>
-              </label>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderPersonalStep = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="firstName">First Name</Label>
-        <Input
-          id="firstName"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          placeholder="Enter your first name"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="lastName">Last Name</Label>
-        <Input
-          id="lastName"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          placeholder="Enter your last name"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dateOfBirth">Date of Birth</Label>
-        <Input
-          id="dateOfBirth"
-          type="date"
-          value={dateOfBirth}
-          onChange={(e) => setDateOfBirth(e.target.value)}
-        />
-      </div>
-    </div>
-  );
-
-  const renderSelfieStep = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-4">
-        <p className="text-muted-foreground">
-          Please take a clear selfie or upload a recent photo of yourself.
-          Make sure your face is clearly visible.
-        </p>
-      </div>
-
-      <Card className="p-6 flex flex-col items-center justify-center text-center">
-        <div
-          className={`w-full max-w-xs aspect-square bg-muted rounded-lg mb-6 flex items-center justify-center overflow-hidden ${
-            selfieImage ? "" : "border-2 border-dashed border-border"
-          }`}
-        >
-          {selfieImage ? (
-            <img
-              src={selfieImage}
-              alt="Selfie"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Camera className="h-16 w-16 text-muted-foreground" />
-          )}
-        </div>
-        <div className="flex gap-4">
-          <Button variant="outline" className="flex-1">
-            <Camera className="mr-2 h-4 w-4" />
-            Take Photo
-          </Button>
-          <div className="flex-1">
-            <input
-              type="file"
-              id="selfie-image"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => handleUploadImage(e, "selfie")}
-            />
-            <label htmlFor="selfie-image">
-              <Button variant="outline" className="w-full" as="span">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload
-              </Button>
-            </label>
-          </div>
-        </div>
-      </Card>
-
-      <div className="text-sm text-muted-foreground text-center">
-        <p>
-          Your photo will only be used for identity verification and will be
-          handled according to our privacy policy.
-        </p>
-      </div>
-    </div>
-  );
-
-  const renderReviewStep = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-4">
-        <p className="text-muted-foreground">
-          Please review your information before submission.
-        </p>
-      </div>
-
-      <Card className="p-4 space-y-4">
-        <div>
-          <h3 className="text-sm text-muted-foreground">Document Type</h3>
-          <p className="font-medium">
-            {documentType === "passport"
-              ? "Passport"
-              : documentType === "national_id"
-              ? "National ID Card"
-              : "Driver's License"}
-          </p>
-        </div>
-
-        <div>
-          <h3 className="text-sm text-muted-foreground">Document Number</h3>
-          <p className="font-medium">{documentNumber}</p>
-        </div>
-
-        <div>
-          <h3 className="text-sm text-muted-foreground">Full Name</h3>
-          <p className="font-medium">
-            {firstName} {lastName}
-          </p>
-        </div>
-
-        <div>
-          <h3 className="text-sm text-muted-foreground">Date of Birth</h3>
-          <p className="font-medium">{dateOfBirth}</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <h3 className="text-sm text-muted-foreground mb-1">
-              Document Front
-            </h3>
-            <div className="w-full aspect-video bg-muted rounded-lg overflow-hidden">
-              {frontImage && (
-                <img
-                  src={frontImage}
-                  alt="ID Front"
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
-          </div>
-          <div>
-            <h3 className="text-sm text-muted-foreground mb-1">
-              Document Back
-            </h3>
-            <div className="w-full aspect-video bg-muted rounded-lg overflow-hidden">
-              {backImage && (
-                <img
-                  src={backImage}
-                  alt="ID Back"
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-sm text-muted-foreground mb-1">Selfie</h3>
-          <div className="w-24 h-24 bg-muted rounded-lg overflow-hidden mx-auto">
-            {selfieImage && (
-              <img
-                src={selfieImage}
-                alt="Selfie"
-                className="w-full h-full object-cover"
-              />
-            )}
-          </div>
-        </div>
-      </Card>
-
-      <div className="text-sm text-muted-foreground text-center">
-        <p>
-          By submitting, you confirm that the information provided is accurate
-          and complete.
-        </p>
-      </div>
-    </div>
-  );
-
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case "document":
-        return renderDocumentStep();
-      case "personal":
-        return renderPersonalStep();
-      case "selfie":
-        return renderSelfieStep();
-      case "review":
-        return renderReviewStep();
-      default:
-        return null;
+  // Check if all required documents are uploaded
+  const isVerificationComplete = () => {
+    if (activeTab === "id-verification") {
+      return selfieUploaded && frontUploaded && (idType === "national_id" ? backUploaded : true);
+    } else {
+      return addressUploaded;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <Logo size="md" className="mx-auto mb-6" />
-          <h1 className="text-xl font-bold">Identity Verification</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {currentStep === "document"
-              ? "Upload your identification document"
-              : currentStep === "personal"
-              ? "Enter your personal information"
-              : currentStep === "selfie"
-              ? "Take a selfie for verification"
-              : "Review and submit your information"}
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="ios-header">
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold ml-2">Identity Verification</h1>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="screen-container animate-fade-in">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold mb-2">Complete KYC Verification</h2>
+          <p className="text-muted-foreground">
+            Please upload clear photos of your identification documents and proof of address.
           </p>
         </div>
 
-        {renderStepIndicator()}
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="id-verification">Identity</TabsTrigger>
+            <TabsTrigger value="address-verification">Address</TabsTrigger>
+          </TabsList>
 
-        {/* Current Step Form */}
-        <div className="my-6">{renderCurrentStep()}</div>
+          {/* ID Verification Tab */}
+          <TabsContent value="id-verification" className="space-y-6 animate-fade-in">
+            {/* Document Type Selection */}
+            <Card className="p-4">
+              <Label htmlFor="id-type" className="mb-2 block">Select ID Type</Label>
+              <select
+                id="id-type"
+                className="w-full border border-input bg-background px-3 py-2 text-sm rounded-md"
+                value={idType}
+                onChange={handleIdTypeChange}
+              >
+                <option value="passport">Passport</option>
+                <option value="drivers_license">Driver's License</option>
+                <option value="national_id">National ID Card</option>
+              </select>
+            </Card>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-8">
-          {currentStep !== "document" ? (
-            <Button variant="ghost" onClick={handleBack} disabled={loading}>
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Back
-            </Button>
-          ) : (
-            <Button variant="ghost" onClick={() => navigate("/login")} disabled={loading}>
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Cancel
-            </Button>
-          )}
+            {/* Selfie Upload */}
+            <Card className="p-4">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="font-medium">Selfie Verification</h3>
+                  <p className="text-sm text-muted-foreground">Take a clear photo of yourself</p>
+                </div>
+                {selfieUploaded && <Check className="text-green-500 h-5 w-5" />}
+              </div>
 
-          {currentStep !== "review" ? (
-            <Button
-              className="bg-brand-600 hover:bg-brand-700"
-              onClick={handleNext}
-            >
-              Next
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button
-              className="bg-brand-600 hover:bg-brand-700"
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit Verification"}
-            </Button>
-          )}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleFileUpload("selfie")}
+                  disabled={loading || selfieUploaded}
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Take Photo
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleFileUpload("selfie")}
+                  disabled={loading || selfieUploaded}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload
+                </Button>
+              </div>
+            </Card>
+
+            {/* Front of ID Upload */}
+            <Card className="p-4">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="font-medium">{idType === "passport" ? "Passport" : "ID Card"} (Front)</h3>
+                  <p className="text-sm text-muted-foreground">Upload a clear photo of the front of your {idType.replace("_", " ")}</p>
+                </div>
+                {frontUploaded && <Check className="text-green-500 h-5 w-5" />}
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleFileUpload("front")}
+                  disabled={loading || frontUploaded}
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Take Photo
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleFileUpload("front")}
+                  disabled={loading || frontUploaded}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload
+                </Button>
+              </div>
+            </Card>
+
+            {/* Back of ID Upload (only for IDs, not passport) */}
+            {idType !== "passport" && (
+              <Card className="p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-medium">ID Card (Back)</h3>
+                    <p className="text-sm text-muted-foreground">Upload a clear photo of the back of your {idType.replace("_", " ")}</p>
+                  </div>
+                  {backUploaded && <Check className="text-green-500 h-5 w-5" />}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleFileUpload("back")}
+                    disabled={loading || backUploaded}
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Take Photo
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleFileUpload("back")}
+                    disabled={loading || backUploaded}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Address Verification Tab */}
+          <TabsContent value="address-verification" className="space-y-6 animate-fade-in">
+            <Card className="p-4">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="font-medium">Proof of Address</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a utility bill, bank statement, or official letter (not older than 3 months)
+                  </p>
+                </div>
+                {addressUploaded && <Check className="text-green-500 h-5 w-5" />}
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => handleFileUpload("address")}
+                  disabled={loading || addressUploaded}
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Take Photo
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => handleFileUpload("address")}
+                  disabled={loading || addressUploaded}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-muted/50">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm">
+                  The document must clearly show your full name, current address, and issue date 
+                  (within the last 3 months).
+                </p>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Submit Button */}
+        <div className="mt-8">
+          <Button 
+            className="w-full bg-brand-600 hover:bg-brand-700"
+            disabled={!isVerificationComplete() || loading}
+            onClick={handleSubmitVerification}
+          >
+            {loading ? "Processing..." : "Submit Verification"}
+          </Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

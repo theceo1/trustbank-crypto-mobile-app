@@ -118,12 +118,13 @@
   }
   
   /* Animation utility classes */
+  /* Fixed circular dependency by directly using animation properties */
   .animate-fade-in {
-    @apply animate-fade-in;
+    animation: fadeIn 0.3s ease-out;
   }
   
   .animate-slide-up {
-    @apply animate-slide-up;
+    animation: slideUp 0.4s ease-out;
   }
   
   /* iOS specific styles */
@@ -138,5 +139,26 @@
   
   .form-label {
     @apply text-sm font-medium text-muted-foreground;
+  }
+}
+
+/* Define keyframes for our animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }

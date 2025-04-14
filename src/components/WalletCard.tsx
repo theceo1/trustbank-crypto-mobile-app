@@ -10,6 +10,8 @@ interface WalletCardProps {
   fiatValue: number;
   iconUrl?: string;
   className?: string;
+  style?: React.CSSProperties;
+  onClick?: () => void;
 }
 
 const WalletCard: React.FC<WalletCardProps> = ({
@@ -19,9 +21,15 @@ const WalletCard: React.FC<WalletCardProps> = ({
   fiatValue,
   iconUrl,
   className,
+  style,
+  onClick,
 }) => {
   return (
-    <Card className={cn("wallet-card animate-fade-in", className)}>
+    <Card 
+      className={cn("wallet-card animate-fade-in", className)}
+      style={style}
+      onClick={onClick}
+    >
       <div className="wallet-card-bg" />
       <div className="relative z-10">
         <div className="flex justify-between items-start">
