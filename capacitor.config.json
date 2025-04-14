@@ -1,0 +1,18 @@
+
+{
+  "appId": "app.lovable.19e3d0894ab944f8adefaa2a4456562f",
+  "appName": "trustbank-crypto-mobile-app",
+  "server": {
+    "url": "https://19e3d089-4ab9-44f8-adef-aa2a4456562f.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#16a34a",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP"
+    }
+  }
+}
