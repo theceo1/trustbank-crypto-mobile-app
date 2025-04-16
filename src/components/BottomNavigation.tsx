@@ -1,63 +1,88 @@
-
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Home, CreditCard, Send, User, BarChart2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+
+const navItems = [
+  {
+    name: "Dashboard",
+    icon: "home",
+    route: "Dashboard",
+  },
+  {
+    name: "Wallet",
+    icon: "credit-card",
+    route: "Wallet",
+  },
+  {
+    name: "Trade",
+    icon: "bar-chart-2",
+    route: "Trade",
+  },
+  {
+    name: "Transfer",
+    icon: "send",
+    route: "Transfer",
+  },
+  {
+    name: "Profile",
+    icon: "user",
+    route: "Profile",
+  },
+];
 
 const BottomNavigation: React.FC = () => {
-  const location = useLocation();
-
-  const navItems = [
-    {
-      path: "/",
-      name: "Home",
-      icon: Home,
-    },
-    {
-      path: "/wallet",
-      name: "Wallet",
-      icon: CreditCard,
-    },
-    {
-      path: "/transactions",
-      name: "Trade",
-      icon: BarChart2,
-    },
-    {
-      path: "/transfer",
-      name: "Transfer",
-      icon: Send,
-    },
-    {
-      path: "/profile",
-      name: "Profile",
-      icon: User,
-    },
-  ];
+  const navigation = useNavigation();
+  const route = useRoute();
 
   return (
-    <nav className="bottom-tab bg-background dark:bg-background border-t border-border">
+    <View style={styles.container}>
       {navItems.map((item) => {
-        const isActive = location.pathname === item.path;
+        const isActive = route.name === item.route;
         return (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 py-1 px-2",
-              {
-                "text-brand-600": isActive,
-                "text-muted-foreground": !isActive,
-              }
-            )}
+          <TouchableOpacity
+            key={item.route}
+            style={styles.tab}
+            onPress={() => navigation.navigate(item.route as never)}
           >
-            <item.icon size={20} />
-            <span className="text-xs mt-1">{item.name}</span>
-          </Link>
+            <Feather
+              name={item.icon as any}
+              size={22}
+              color={isActive ? "#10b981" : "#6b7280"}
+            />
+            <Text style={[styles.label, isActive && styles.activeLabel]}>
+              {item.name}
+            </Text>
+          </TouchableOpacity>
         );
       })}
-    </nav>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    backgroundColor: "#fff",
+    height: 60,
+  },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 6,
+  },
+  label: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginTop: 2,
+  },
+  activeLabel: {
+    color: "#10b981",
+    fontWeight: "bold",
+  },
+});
 
 export default BottomNavigation;

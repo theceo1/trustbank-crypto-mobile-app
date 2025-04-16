@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { Appearance } from "react-native";
 
 type Theme = "light" | "dark" | "system";
 
@@ -15,54 +16,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("system");
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
-  // Initialize theme from localStorage if available
-  useEffect(() => {
-    const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored) {
-      setTheme(stored);
-    }
-  }, []);
-
-  // Apply theme to document
-  useEffect(() => {
-    const root = window.document.documentElement;
-    
-    // Remove the previous theme class
-    root.classList.remove("light", "dark");
-    
-    // Determine the resolved theme
-    let resolvedTheme: "light" | "dark";
-    
+  // React Native: use Appearance API for system theme
+  React.useEffect(() => {
     if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
-      resolvedTheme = systemTheme;
+      const colorScheme = Appearance.getColorScheme();
+      setResolvedTheme(colorScheme === "dark" ? "dark" : "light");
+      const listener = Appearance.addChangeListener(({ colorScheme }) => {
+        setResolvedTheme(colorScheme === "dark" ? "dark" : "light");
+      });
+      return () => listener.remove();
     } else {
-      root.classList.add(theme);
-      resolvedTheme = theme;
+      setResolvedTheme(theme);
     }
-    
-    setResolvedTheme(resolvedTheme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  // Listen for system theme changes
-  useEffect(() => {
-    if (theme !== "system") return;
-    
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    
-    const handleChange = () => {
-      const newResolvedTheme = mediaQuery.matches ? "dark" : "light";
-      document.documentElement.classList.remove("light", "dark");
-      document.documentElement.classList.add(newResolvedTheme);
-      setResolvedTheme(newResolvedTheme);
-    };
-    
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
   return (

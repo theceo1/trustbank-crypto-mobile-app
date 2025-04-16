@@ -1,21 +1,15 @@
-
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Search, Send, QrCode, Copy, CheckCircle, Wallet, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React, { memo, useState } from "react";
+import { View, Text, TextInput, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome } from "@expo/vector-icons";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockWallets } from "@/lib/quidax";
 import { useToast } from "@/hooks/use-toast";
+import { Select } from "@/components/ui/select";
 import BottomNavigation from "@/components/BottomNavigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const walletAddresses = {
   btc: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
@@ -24,7 +18,7 @@ const walletAddresses = {
 };
 
 const TransferPage = () => {
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const { toast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,13 +36,16 @@ const TransferPage = () => {
   );
   
   const handleCopyAddress = (address: string) => {
-    navigator.clipboard.writeText(address);
-    setCopiedAddress(true);
-    toast({
-      title: "Address copied",
-      description: "Address copied to clipboard",
+    // Clipboard API for React Native
+    import("expo-clipboard").then(Clipboard => {
+      Clipboard.setStringAsync(address);
+      setCopiedAddress(true);
+      toast({
+        title: "Address copied",
+        description: "Address copied to clipboard",
+      });
+      setTimeout(() => setCopiedAddress(false), 2000);
     });
-    setTimeout(() => setCopiedAddress(false), 2000);
   };
 
   const handleSend = () => {
@@ -68,230 +65,162 @@ const TransferPage = () => {
     
     // In a real app, this would send the transaction
     setTimeout(() => {
-      navigate("/transactions");
+      navigation.navigate("Transactions" as never);
     }, 1500);
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <View style={{ flex: 1, backgroundColor: '#f8fafd' }}>
       {/* Header */}
-      <header className="ios-header">
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/dashboard")}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold ml-2">Transfer</h1>
-        </div>
-      </header>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 40, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: '#1a237e' }}>
+        <Button style={{ backgroundColor: 'transparent', marginRight: 8 }} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#fff" />
+        </Button>
+        <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>Transfer</Text>
+      </View>
 
       {/* Main Content */}
-      <main className="screen-container animate-fade-in">
-        <Tabs defaultValue="send" className="w-full">
-          <TabsList className="grid grid-cols-2 mb-6">
-            <TabsTrigger value="send">Send</TabsTrigger>
-            <TabsTrigger value="receive">Receive</TabsTrigger>
+      <View style={{ flex: 1, padding: 16 }}>
+        <Tabs value={"send"} onValueChange={() => {}}>
+          <TabsList>
+            <TabsTrigger tabValue="send">Send</TabsTrigger>
+            <TabsTrigger tabValue="receive">Receive</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="send" className="space-y-6">
-            <Card>
-              <CardContent className="p-4 space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Select Wallet
-                  </label>
-                  <Select value={selectedWallet} onValueChange={setSelectedWallet}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select wallet" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockWallets.map(wallet => (
-                        <SelectItem key={wallet.id} value={wallet.id}>
-                          <div className="flex items-center">
-                            <img
-                              src={wallet.iconUrl}
-                              alt={wallet.symbol}
-                              className="w-5 h-5 mr-2 rounded-full bg-white p-0.5"
-                            />
-                            <span>{wallet.name} ({wallet.balance} {wallet.symbol})</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  <div className="mt-2 text-sm">
-                    <span className="text-muted-foreground">Available: </span>
-                    <span className="font-medium">{currentWallet?.balance} {currentWallet?.symbol}</span>
-                    <span className="text-muted-foreground ml-1">
-                      (${currentWallet?.fiatValue.toLocaleString()})
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Recipient Address
-                  </label>
-                  <div className="relative">
-                    <Input
-                      placeholder={`Enter ${currentWallet?.symbol} address`}
-                      value={recipientAddress}
-                      onChange={(e) => setRecipientAddress(e.target.value)}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      onClick={() => navigate("/scan-qr")}
-                    >
-                      <QrCode className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Amount
-                  </label>
-                  <div className="grid grid-cols-7 gap-2">
-                    <Input
-                      className="col-span-5"
-                      placeholder={`Amount in ${currentWallet?.symbol}`}
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                    />
-                    <Button
-                      variant="outline"
-                      className="col-span-2"
-                      onClick={() => setAmount(currentWallet?.balance || "0")}
-                    >
-                      Max
-                    </Button>
-                  </div>
-                  {amount && (
-                    <p className="text-sm text-muted-foreground">
-                      ≈ ${(Number(amount) * (currentWallet?.fiatValue || 0) / Number(currentWallet?.balance || 1)).toFixed(2)}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Memo (Optional)
-                  </label>
-                  <Input
-                    placeholder="Add a note to this transaction"
-                    value={memo}
-                    onChange={(e) => setMemo(e.target.value)}
+
+          <TabsContent tabValue="send">
+            <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#3949ab', shadowOpacity: 0.08, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>Select Wallet</Text>
+              <Select
+                selectedValue={selectedWallet}
+                onValueChange={setSelectedWallet}
+                items={mockWallets.map(wallet => ({ label: `${wallet.name} (${wallet.symbol})`, value: wallet.id }))}
+                placeholder="Select wallet"
+              />
+              <Text style={{ color: '#888', fontSize: 13, marginTop: 8 }}>
+                Available: <Text style={{ fontWeight: '600', color: '#222' }}>{currentWallet?.balance} {currentWallet?.symbol}</Text> <Text style={{ color: '#888' }}>(${currentWallet?.fiatValue.toLocaleString()})</Text>
+              </Text>
+
+              <View style={{ marginTop: 16, marginBottom: 12 }}>
+                <Text style={{ color: '#222', fontSize: 16, fontWeight: 'bold' }}>Recipient Address</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+
+              <Text style={{ fontWeight: 'bold', fontSize: 16, marginTop: 8 }}>Memo (Optional)</Text>
+              <TextInput
+                placeholder="Add a note to this transaction"
+                value={memo}
+                onChangeText={setMemo}
+                style={{ height: 40, borderColor: 'gray', borderWidth: 1, paddingHorizontal: 8 }}
+              />
+
+              <Button style={{ backgroundColor: '#10b981', marginTop: 12 }} onPress={handleSend}>
+                <Feather name="send" size={18} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Send {currentWallet?.symbol}</Text>
+              </Button>
+            </View>
+
+            <View style={{ marginTop: 12, marginBottom: 24 }}>
+              <Text style={{ color: '#888', fontSize: 13 }}>• Network fees will be calculated before confirmation</Text>
+                  <TextInput
+                    placeholder="Enter recipient address"
+                    value={recipientAddress}
+                    onChangeText={setRecipientAddress}
+                    style={{ flex: 1, height: 40, borderColor: 'gray', borderWidth: 1, paddingHorizontal: 8 }}
                   />
-                </div>
-                
-                <Button
-                  className="w-full bg-brand-600 hover:bg-brand-700 mt-4"
-                  onClick={handleSend}
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  Send {currentWallet?.symbol}
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>• Network fees will be calculated before confirmation</p>
-              <p>• Always double check the recipient address before sending</p>
-              <p>• Transactions cannot be reversed once confirmed</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="receive" className="space-y-6">
-            <Card>
-              <CardContent className="p-4 space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Select Wallet
-                  </label>
-                  <Select value={selectedWallet} onValueChange={setSelectedWallet}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select wallet" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockWallets.map(wallet => (
-                        <SelectItem key={wallet.id} value={wallet.id}>
-                          <div className="flex items-center">
-                            <img
-                              src={wallet.iconUrl}
-                              alt={wallet.symbol}
-                              className="w-5 h-5 mr-2 rounded-full bg-white p-0.5"
-                            />
-                            <span>{wallet.name} ({wallet.symbol})</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="rounded-lg border border-dashed border-border p-4 flex flex-col items-center space-y-4">
-                  <div className="p-2 bg-white rounded-lg">
-                    <QrCode className="h-48 w-48" />
-                  </div>
-                  <p className="text-center font-medium">Scan to receive {currentWallet?.symbol}</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Your {currentWallet?.name} Address
-                  </label>
-                  <div className="relative">
-                    <Input
-                      value={walletAddresses[currentWallet?.currency as keyof typeof walletAddresses] || ""}
-                      readOnly
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      onClick={() => handleCopyAddress(walletAddresses[currentWallet?.currency as keyof typeof walletAddresses] || "")}
-                    >
-                      {copiedAddress ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <Copy className="h-5 w-5" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleCopyAddress(walletAddresses[currentWallet?.currency as keyof typeof walletAddresses] || "")}
-                    className="w-full"
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy Address
+                  <Button style={{ marginLeft: 8, padding: 8, backgroundColor: '#f1f4ff' }} onPress={() => navigation.navigate('ScanQR' as never)}>
+                    <MaterialCommunityIcons name="qrcode-scan" size={20} color="#1a237e" />
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>• Only send {currentWallet?.symbol} to this address</p>
-              <p>• Sending any other cryptocurrency may result in permanent loss</p>
-              <p>• Your deposit will be available after network confirmations</p>
-            </div>
+                </View>
+              </View>
+
+              <View style={{ marginTop: 16, marginBottom: 12 }}>
+                <Text style={{ color: '#222', fontSize: 16, fontWeight: 'bold' }}>Amount</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TextInput
+                    placeholder={`Amount in ${currentWallet?.symbol}`}
+                    value={amount}
+                    onChangeText={setAmount}
+                    style={{ flex: 1, height: 40, borderColor: 'gray', borderWidth: 1, paddingHorizontal: 8 }}
+                  />
+                  <Button style={{ marginLeft: 8, padding: 8, backgroundColor: '#f1f4ff' }} onPress={() => setAmount(currentWallet?.balance || "0")}>
+                    Max
+                  </Button>
+                </View>
+                {!!amount && (
+                  <Text style={{ fontSize: 13, color: '#888', marginTop: 6 }}>
+                    ≈ ${((Number(amount) * (currentWallet?.fiatValue || 0)) / Number(currentWallet?.balance || 1)).toFixed(2)}
+                  </Text>
+                )}
+              </View>
+
+              <View style={{ marginTop: 16, marginBottom: 12 }}>
+                <Text style={{ color: '#222', fontSize: 16, fontWeight: 'bold' }}>Memo (Optional)</Text>
+                <TextInput
+                  placeholder="Add a note to this transaction"
+                  value={memo}
+                  onChangeText={setMemo}
+                  style={{ height: 40, borderColor: 'gray', borderWidth: 1, paddingHorizontal: 8 }}
+                />
+              </View>
+
+              <Button
+                style={{ backgroundColor: '#10b981', marginTop: 12 }}
+                onPress={handleSend}
+              >
+                <Feather name="send" size={18} style={{ marginRight: 8 }} />
+                Send {currentWallet?.symbol}
+              </Button>
+
+              <View style={{ marginTop: 12, marginBottom: 24 }}>
+                <Text style={{ color: '#888', fontSize: 13 }}>• Network fees will be calculated before confirmation</Text>
+                <Text style={{ color: '#888', fontSize: 13 }}>• Always double check the recipient address before sending</Text>
+                <Text style={{ color: '#888', fontSize: 13 }}>• Transactions cannot be reversed once confirmed</Text>
+              </View>
+            </View>
+          </TabsContent>
+
+          <TabsContent tabValue="receive">
+            <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#3949ab', shadowOpacity: 0.08, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>Select Wallet</Text>
+              <Select
+                selectedValue={selectedWallet}
+                onValueChange={setSelectedWallet}
+                items={mockWallets.map(wallet => ({ label: `${wallet.name} (${wallet.symbol})`, value: wallet.id }))}
+                placeholder="Select wallet"
+              />
+              <View style={{ alignItems: 'center', marginVertical: 16 }}>
+                <MaterialCommunityIcons name="qrcode" size={128} color="#1a237e" />
+                <Text style={{ fontSize: 15, fontWeight: '500', marginTop: 8 }}>Scan to receive {currentWallet?.symbol}</Text>
+              </View>
+              <Text style={{ fontWeight: 'bold', fontSize: 16, marginTop: 8 }}>Your {currentWallet?.name} Address</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <TextInput
+                  value={walletAddresses[currentWallet?.currency as keyof typeof walletAddresses] || ""}
+                  editable={false}
+                  style={{ flex: 1, height: 40, borderColor: 'gray', borderWidth: 1, paddingHorizontal: 8 }}
+                />
+                <Button style={{ marginLeft: 8, padding: 8, backgroundColor: '#f1f4ff' }} onPress={() => handleCopyAddress(walletAddresses[currentWallet?.currency as keyof typeof walletAddresses] || "")}> 
+                  {copiedAddress ? (
+                    <FontAwesome name="check-circle" size={20} color="green" />
+                  ) : (
+                    <Feather name="copy" size={20} color="#1a237e" />
+                  )}
+                </Button>
+              </View>
+              <Button style={{ backgroundColor: '#f1f4ff', marginTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }} onPress={() => handleCopyAddress(walletAddresses[currentWallet?.currency as keyof typeof walletAddresses] || "")}> 
+                <Feather name="copy" size={18} color="#1a237e" style={{ marginRight: 8 }} />
+                <Text style={{ color: '#1a237e', fontWeight: 'bold' }}>Copy Address</Text>
+              </Button>
+              <View style={{ marginTop: 12, marginBottom: 24 }}>
+                <Text style={{ color: '#888', fontSize: 13 }}>• Only send {currentWallet?.symbol} to this address</Text>
+                <Text style={{ color: '#888', fontSize: 13 }}>• Always double check the recipient address before sending</Text>
+                <Text style={{ color: '#888', fontSize: 13 }}>• Transactions cannot be reversed once confirmed</Text>
+              </View>
+            </View>
           </TabsContent>
         </Tabs>
-      </main>
-
-      {/* Bottom Navigation */}
+      </View>
       <BottomNavigation />
-    </div>
+    </View>
   );
 };
 

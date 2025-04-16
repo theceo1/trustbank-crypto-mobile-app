@@ -1,17 +1,24 @@
 
-import { createClient } from "@supabase/supabase-js";
-import { env } from "@/config/env";
+// Expo React Native Supabase setup
+// Install dependencies:
+//   expo install @react-native-async-storage/async-storage
+//   npm install react-native-url-polyfill @supabase/supabase-js
 
-// Use the environment variables defined in env.ts
+import 'react-native-url-polyfill/auto';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient } from '@supabase/supabase-js';
+import { env } from '@/config/env';
+
 export const supabase = createClient(
-  env.SUPABASE_URL, 
+  env.SUPABASE_URL,
   env.SUPABASE_ANON_KEY,
   {
     auth: {
+      storage: AsyncStorage,
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true
-    }
+      detectSessionInUrl: false, // mobile should be false
+    },
   }
 );
 

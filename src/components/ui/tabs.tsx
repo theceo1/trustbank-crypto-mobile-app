@@ -1,53 +1,44 @@
-import * as React from "react"
-import * as TabsPrimitive from "@radix-ui/react-tabs"
+import React from 'react';
+import { View, TouchableOpacity, Text } from 'react-native';
 
-import { cn } from "@/lib/utils"
+// Tabs context to manage state
+const TabsContext = React.createContext({ value: '', setValue: (v: string) => {} });
 
-const Tabs = TabsPrimitive.Root
+export const Tabs = ({ value, onValueChange, children }: { value: string, onValueChange: (v: string) => void, children: React.ReactNode }) => (
+  <TabsContext.Provider value={{ value, setValue: onValueChange }}>
+    <View>{children}</View>
+  </TabsContext.Provider>
+);
 
-const TabsList = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.List>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.List
-    ref={ref}
-    className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-      className
-    )}
-    {...props}
-  />
-))
-TabsList.displayName = TabsPrimitive.List.displayName
+export const TabsList = ({ children }: { children: React.ReactNode }) => (
+  <View style={{ flexDirection: 'row', marginBottom: 8 }}>{children}</View>
+);
 
-const TabsTrigger = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
-      className
-    )}
-    {...props}
-  />
-))
-TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
+export const TabsTrigger = ({ tabValue, children, style }: { tabValue: string, children: React.ReactNode, style?: any }) => {
+  const { value, setValue } = React.useContext(TabsContext);
+  const active = value === tabValue;
+  return (
+    <TouchableOpacity
+      style={[
+        {
+          flex: 1,
+          padding: 12,
+          backgroundColor: active ? '#10b981' : '#fff',
+          borderColor: '#10b981',
+          borderWidth: 1,
+          alignItems: 'center',
+        },
+        style,
+      ]}
+      onPress={() => setValue(tabValue)}
+    >
+      <Text style={{ color: active ? '#fff' : '#10b981', fontWeight: 'bold' }}>{children}</Text>
+    </TouchableOpacity>
+  );
+};
 
-const TabsContent = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    ref={ref}
-    className={cn(
-      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className
-    )}
-    {...props}
-  />
-))
-TabsContent.displayName = TabsPrimitive.Content.displayName
-
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+export const TabsContent = ({ tabValue, children }: { tabValue: string, children: React.ReactNode }) => {
+  const { value } = React.useContext(TabsContext);
+  if (value !== tabValue) return null;
+  return <View>{children}</View>;
+};

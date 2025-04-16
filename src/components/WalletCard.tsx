@@ -1,17 +1,15 @@
 
 import React from "react";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { View, Image, Text, StyleSheet, ViewStyle, TouchableOpacity } from "react-native";
 
-interface WalletCardProps {
+export interface WalletCardProps {
   name: string;
   symbol: string;
   balance: string;
   fiatValue: number;
   iconUrl?: string;
-  className?: string;
-  style?: React.CSSProperties;
-  onClick?: () => void;
+  style?: ViewStyle;
+  onPress?: () => void;
 }
 
 const WalletCard: React.FC<WalletCardProps> = ({
@@ -20,48 +18,114 @@ const WalletCard: React.FC<WalletCardProps> = ({
   balance,
   fiatValue,
   iconUrl,
-  className,
   style,
-  onClick,
+  onPress,
 }) => {
   return (
-    <Card 
-      className={cn("wallet-card", className)}
-      style={style}
-      onClick={onClick}
+    <TouchableOpacity
+      style={[styles.card, style]}
+      onPress={onPress}
+      activeOpacity={0.85}
     >
-      <div className="wallet-card-bg" />
-      <div className="relative z-10">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-2">
-            {iconUrl && (
-              <img
-                src={iconUrl}
-                alt={`${name} icon`}
-                className="w-8 h-8 rounded-full bg-white p-1"
-              />
-            )}
-            <div>
-              <h3 className="text-lg font-medium">{name}</h3>
-              <p className="text-sm opacity-80">{symbol}</p>
-            </div>
-          </div>
-        </div>
-        <div className="mt-6">
-          <div className="flex justify-between items-end">
-            <div>
-              <p className="text-xs opacity-80">Balance</p>
-              <h2 className="text-2xl font-bold">{balance} {symbol}</h2>
-            </div>
-            <div className="text-right">
-              <p className="text-xs opacity-80">Value</p>
-              <p className="text-lg font-medium">${fiatValue.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Card>
+      <View style={styles.rowTop}>
+        {iconUrl && (
+          <Image
+            source={{ uri: iconUrl }}
+            style={styles.icon}
+            resizeMode="contain"
+          />
+        )}
+        <View>
+          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.symbol}>{symbol}</Text>
+        </View>
+      </View>
+      <View style={styles.balanceSection}>
+        <View>
+          <Text style={styles.balanceLabel}>Balance</Text>
+          <Text style={styles.balanceValue}>{balance} {symbol}</Text>
+        </View>
+        <View>
+          <Text style={styles.valueLabel}>Value</Text>
+          <Text style={styles.valueAmount}>${fiatValue.toLocaleString()}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 };
 
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#10b981',
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 10,
+    minWidth: 180,
+    minHeight: 120,
+  },
+  rowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  icon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fff',
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#222',
+  },
+  symbol: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  balanceSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 10,
+  },
+  balanceLabel: {
+    fontSize: 12,
+    color: '#888',
+  },
+  balanceValue: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1a237e',
+    marginTop: 2,
+  },
+  valueLabel: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'right',
+  },
+  valueAmount: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#10b981',
+    marginTop: 2,
+    textAlign: 'right',
+  },
+});
+
 export default WalletCard;
+

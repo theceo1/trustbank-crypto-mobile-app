@@ -1,21 +1,29 @@
 
-import React, { useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import React from "react";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "@/contexts/AuthContext";
 import Home from "@/pages/Home";
+import Login from "@/pages/Login";
 
-// Main entry point that routes based on authentication status
+// Create a stack navigator
+const Stack = createNativeStackNavigator();
+
 const Index = () => {
   const { user, isLoading } = useAuth();
 
-  // While authentication is loading, return null
   if (isLoading) {
     return null;
   }
 
-  // If user is logged in, show home page
-  // If not, redirect to login
-  return user ? <Home /> : <Navigate to="/login" />;
+  return (
+    <Stack.Navigator>
+      {user ? (
+        <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+      ) : (
+        <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+      )}
+    </Stack.Navigator>
+  );
 };
 
 export default Index;

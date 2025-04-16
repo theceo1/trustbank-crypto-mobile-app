@@ -1,17 +1,18 @@
 
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, Key, User, Mail } from "lucide-react";
+import Checkbox from "@/components/ui/checkbox";
 import Logo from "@/components/Logo";
 import { signInWithGoogle } from "@/lib/supabase";
-import { Separator } from "@/components/ui/separator";
-
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from 'expo-linear-gradient';
+ 
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,12 +24,18 @@ const Signup = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const { signUp } = useAuth();
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const { toast } = useToast();
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSignup = async () => {
+    if (password.length < 8) {
+      toast({
+        title: "Password Error",
+        description: "Password must be at least 8 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (password !== confirmPassword) {
       toast({
         title: "Password Error",
@@ -50,7 +57,7 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await signUp(email, password);
+      const { data, error } = await signUp(email, password, fullName);
       
       if (error) {
         toast({
@@ -64,7 +71,7 @@ const Signup = () => {
           description: "Check your email to verify your account.",
         });
         // Navigate to the KYC verification process
-        navigate("/kyc-intro");
+        navigation.navigate("kyc-intro" as never);
       }
     } catch (error) {
       toast({
@@ -106,174 +113,303 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md space-y-6 animate-fade-in">
-        <div className="text-center">
-          <Logo size="lg" className="mx-auto mb-6" />
-          <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
-          <p className="text-muted-foreground mt-2">
-            Join trustBank and access the future of finance
-          </p>
-        </div>
+    <LinearGradient
+      colors={["#10b981", "#1a237e"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.bg}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.card}>
+            <Logo size="lg"/>
+            <Text style={styles.title}>Create your account</Text>
+            <Text style={styles.subtitle}>Join trustBank and access the future of finance</Text>
 
-        <form className="space-y-6" onSubmit={handleSignup}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            {/* Full Name */}
+            <View style={styles.inputGroup}>
+              <Label>Full Name</Label>
+              <View style={styles.inputIconRow}>
+                <Feather name="user" size={18} color="#bdbdbd" style={styles.inputIcon} />
                 <Input
-                  id="fullName"
                   placeholder="John Doe"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pl-10"
-                  required
+                  onChangeText={setFullName}
+                  style={styles.input}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  importantForAutofill="yes"
                 />
-              </div>
-            </div>
+              </View>
+            </View>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            {/* Email */}
+            <View style={styles.inputGroup}>
+              <Label>Email</Label>
+              <View style={styles.inputIconRow}>
+                <Feather name="mail" size={18} color="#bdbdbd" style={styles.inputIcon} />
                 <Input
-                  id="email"
                   placeholder="you@example.com"
-                  type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
+                  onChangeText={setEmail}
+                  style={styles.input}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  importantForAutofill="yes"
+                  autoComplete="email"
+                  returnKeyType="next"
                 />
-              </div>
-            </div>
+              </View>
+            </View>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Label>Password</Label>
+              <View style={styles.inputIconRow}>
+                <Feather name="lock" size={18} color="#bdbdbd" style={styles.inputIcon} />
                 <Input
-                  id="password"
                   placeholder="••••••••"
-                  type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  required
-                  minLength={8}
+                  onChangeText={setPassword}
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  importantForAutofill="yes"
+                  autoComplete="password"
+                  returnKeyType="next"
+                  
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3"
+                <TouchableOpacity
+                  style={styles.inputIconRight}
+                  onPress={() => setShowPassword((v) => !v)}
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </button>
-              </div>
-            </div>
+                  <Feather name={showPassword ? "eye-off" : "eye"} size={18} color="#bdbdbd" />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            {/* Confirm Password */}
+            <View style={styles.inputGroup}>
+              <Label>Confirm Password</Label>
+              <View style={styles.inputIconRow}>
+                <Feather name="lock" size={18} color="#bdbdbd" style={styles.inputIcon} />
                 <Input
-                  id="confirmPassword"
                   placeholder="••••••••"
-                  type={showPassword ? "text" : "password"}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10"
-                  required
+                  onChangeText={setConfirmPassword}
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  importantForAutofill="yes"
+                  autoComplete="password"
+                  returnKeyType="done"
+                  
                 />
-              </div>
-            </div>
-          </div>
+              </View>
+            </View>
 
-          <div className="flex items-start space-x-2">
-            <Checkbox
-              id="terms"
-              checked={agreedToTerms}
-              onCheckedChange={(checked) => 
-                setAgreedToTerms(checked === true)
-              }
-            />
-            <Label htmlFor="terms" className="text-sm cursor-pointer">
-              I agree to the{" "}
-              <Link
-                to="/terms"
-                className="text-brand-600 hover:text-brand-500"
-              >
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link
-                to="/privacy"
-                className="text-brand-600 hover:text-brand-500"
-              >
-                Privacy Policy
-              </Link>
-            </Label>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-brand-600 hover:bg-brand-700"
-            disabled={loading}
-          >
-            {loading ? "Creating account..." : "Create account"}
-          </Button>
-          
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-          
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignup}
-            disabled={googleLoading}
-          >
-            <svg
-              className="mr-2 h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 488 512"
-            >
-              <path
-                d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                fill="currentColor"
+            {/* Terms Checkbox */}
+            <View style={styles.termsRow}>
+              <Checkbox
+                checked={agreedToTerms}
+                onChange={setAgreedToTerms}
+                style={styles.checkbox}
               />
-            </svg>
-            {googleLoading ? "Connecting..." : "Sign up with Google"}
-          </Button>
-        </form>
+              <Text style={styles.termsText}>
+                I agree to the
+                <Text style={styles.link} onPress={() => navigation.navigate("Terms" as never)}> Terms of Service</Text>
+                {' '}and{' '}
+                <Text style={styles.link} onPress={() => navigation.navigate("Privacy" as never)}>Privacy Policy</Text>
+              </Text>
+            </View>
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="font-medium text-brand-600 hover:text-brand-500"
+            {/* Signup Button */}
+            <Button
+              style={styles.signupBtn}
+              onPress={handleSignup}
+              disabled={loading}
             >
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+              {loading ? <ActivityIndicator color="#fff" /> : "Create account"}
+            </Button>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>Or continue with</Text>
+              <View style={styles.divider} />
+            </View>
+
+            {/* Google Signup */}
+            <TouchableOpacity
+              style={styles.googleBtn}
+              onPress={handleGoogleSignup}
+              disabled={googleLoading}
+              activeOpacity={0.8}
+            >
+              <Feather name="globe" size={18} color="#10b981" style={{ marginRight: 8 }} />
+              <Text style={styles.googleBtnText}>{googleLoading ? "Connecting..." : "Sign up with Google"}</Text>
+            </TouchableOpacity>
+
+            {/* Login Link */}
+            <View style={styles.loginRow}>
+              <Text style={styles.loginText}>
+                Already have an account?{' '}
+                <Text style={styles.link} onPress={() => navigation.navigate("Login" as never)}>Sign in</Text>
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
+
+const styles = StyleSheet.create({
+  bg: {
+    flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    paddingVertical: 32,
+    paddingHorizontal: 22,
+    shadowColor: '#10b981',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 32,
+    elevation: 8,
+    alignItems: 'center',
+  },
+  logo: {
+    marginBottom: 18,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#10b981',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#5c5e6b',
+    marginBottom: 18,
+    textAlign: 'center',
+  },
+  inputGroup: {
+    width: '100%',
+    marginBottom: 14,
+  },
+  inputIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f6f8fa',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#e0e7ef',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 6,
+  },
+  inputIcon: {
+    marginRight: 6,
+  },
+  inputIconRight: {
+    marginLeft: 'auto',
+    padding: 4,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#222',
+    paddingVertical: 10,
+    backgroundColor: 'transparent',
+  },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 10,
+    width: '100%',
+  },
+  checkbox: {
+    marginRight: 10,
+    borderColor: '#10b981',
+  },
+  termsText: {
+    fontSize: 14,
+    color: '#5c5e6b',
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  link: {
+    color: '#10b981',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+  signupBtn: {
+    width: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+    width: '100%',
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e7ef',
+  },
+  dividerText: {
+    fontSize: 12,
+    color: '#a1a1aa',
+    marginHorizontal: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 13,
+    width: '100%',
+    backgroundColor: '#f6f8fa',
+    marginBottom: 8,
+  },
+  googleBtnText: {
+    color: '#10b981',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  loginRow: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  loginText: {
+    fontSize: 14,
+    color: '#5c5e6b',
+  },
+});
 
 export default Signup;

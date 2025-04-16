@@ -1,8 +1,7 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Fingerprint, X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import { View, Text, Modal, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
 interface BiometricPromptProps {
   isOpen: boolean;
@@ -54,43 +53,123 @@ const BiometricPrompt = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col items-center justify-center p-4 space-y-6">
-          <div className="text-center text-muted-foreground text-sm">
-            {description}
-          </div>
-          
-          <div 
-            className={`w-20 h-20 rounded-full flex items-center justify-center border-2 ${
-              isAuthenticating 
-                ? "border-brand-600 animate-pulse" 
-                : "border-muted-foreground"
-            }`}
-          >
-            <Fingerprint 
-              size={48} 
-              className={isAuthenticating ? "text-brand-600" : "text-muted-foreground"} 
+    <Modal
+      visible={isOpen}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={styles.overlay}>
+        <View style={styles.modal}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.description}>{description}</Text>
+          <View style={[styles.iconWrapper, isAuthenticating && styles.iconWrapperActive]}>
+            <Feather
+              name="lock"
+              size={48}
+              color={isAuthenticating ? '#2563eb' : '#6b7280'}
+              style={isAuthenticating ? styles.iconActive : styles.icon}
             />
-          </div>
-          
-          <div className="space-x-2">
-            <Button variant="outline" onClick={onClose} disabled={isAuthenticating}>
-              <X className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-            <Button onClick={handleAuthenticate} disabled={isAuthenticating}>
-              <Fingerprint className="mr-2 h-4 w-4" />
-              {isAuthenticating ? "Authenticating..." : "Authenticate"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+            {isAuthenticating && <ActivityIndicator size="small" color="#2563eb" style={{ position: 'absolute', bottom: 8, right: 8 }} />}
+          </View>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.button, styles.outlineButton, isAuthenticating && styles.disabledButton]}
+              onPress={onClose}
+              disabled={isAuthenticating}
+            >
+              <Feather name="x" size={18} color="#6b7280" style={{ marginRight: 8 }} />
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, isAuthenticating && styles.disabledButton]}
+              onPress={handleAuthenticate}
+              disabled={isAuthenticating}
+            >
+              <Feather name="lock" size={18} color="#2563eb" style={{ marginRight: 8 }} />
+              <Text style={styles.buttonText}>{isAuthenticating ? "Authenticating..." : "Authenticate"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modal: {
+    width: 320,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#111827',
+  },
+  description: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  iconWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#6b7280',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  iconWrapperActive: {
+    borderColor: '#2563eb',
+  },
+  icon: {},
+  iconActive: {},
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    backgroundColor: '#2563eb',
+    marginHorizontal: 4,
+  },
+  outlineButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+});
+
 export default BiometricPrompt;
+

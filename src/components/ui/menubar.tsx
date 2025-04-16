@@ -1,234 +1,175 @@
-import * as React from "react"
-import * as MenubarPrimitive from "@radix-ui/react-menubar"
-import { Check, ChevronRight, Circle } from "lucide-react"
+import * as React from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
-import { cn } from "@/lib/utils"
+export interface MenubarItem {
+  label: string;
+  onPress?: () => void;
+  submenu?: MenubarItem[];
+  checked?: boolean;
+  radioValue?: string;
+  shortcut?: string;
+  icon?: React.ReactNode;
+}
 
-const MenubarMenu = MenubarPrimitive.Menu
+export interface MenubarProps {
+  items: MenubarItem[];
+  style?: any;
+}
 
-const MenubarGroup = MenubarPrimitive.Group
-
-const MenubarPortal = MenubarPrimitive.Portal
-
-const MenubarSub = MenubarPrimitive.Sub
-
-const MenubarRadioGroup = MenubarPrimitive.RadioGroup
-
-const Menubar = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <MenubarPrimitive.Root
-    ref={ref}
-    className={cn(
-      "flex h-10 items-center space-x-1 rounded-md border bg-background p-1",
-      className
-    )}
-    {...props}
-  />
-))
-Menubar.displayName = MenubarPrimitive.Root.displayName
-
-const MenubarTrigger = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <MenubarPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
-      className
-    )}
-    {...props}
-  />
-))
-MenubarTrigger.displayName = MenubarPrimitive.Trigger.displayName
-
-const MenubarSubTrigger = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.SubTrigger>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.SubTrigger> & {
-    inset?: boolean
-  }
->(({ className, inset, children, ...props }, ref) => (
-  <MenubarPrimitive.SubTrigger
-    ref={ref}
-    className={cn(
-      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
-      inset && "pl-8",
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <ChevronRight className="ml-auto h-4 w-4" />
-  </MenubarPrimitive.SubTrigger>
-))
-MenubarSubTrigger.displayName = MenubarPrimitive.SubTrigger.displayName
-
-const MenubarSubContent = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.SubContent>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.SubContent>
->(({ className, ...props }, ref) => (
-  <MenubarPrimitive.SubContent
-    ref={ref}
-    className={cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-      className
-    )}
-    {...props}
-  />
-))
-MenubarSubContent.displayName = MenubarPrimitive.SubContent.displayName
-
-const MenubarContent = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Content>
->(
-  (
-    { className, align = "start", alignOffset = -4, sideOffset = 8, ...props },
-    ref
-  ) => (
-    <MenubarPrimitive.Portal>
-      <MenubarPrimitive.Content
-        ref={ref}
-        align={align}
-        alignOffset={alignOffset}
-        sideOffset={sideOffset}
-        className={cn(
-          "z-50 min-w-[12rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-          className
-        )}
-        {...props}
-      />
-    </MenubarPrimitive.Portal>
-  )
-)
-MenubarContent.displayName = MenubarPrimitive.Content.displayName
-
-const MenubarItem = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Item> & {
-    inset?: boolean
-  }
->(({ className, inset, ...props }, ref) => (
-  <MenubarPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      inset && "pl-8",
-      className
-    )}
-    {...props}
-  />
-))
-MenubarItem.displayName = MenubarPrimitive.Item.displayName
-
-const MenubarCheckboxItem = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.CheckboxItem>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.CheckboxItem>
->(({ className, children, checked, ...props }, ref) => (
-  <MenubarPrimitive.CheckboxItem
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
-    checked={checked}
-    {...props}
-  >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <MenubarPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
-      </MenubarPrimitive.ItemIndicator>
-    </span>
-    {children}
-  </MenubarPrimitive.CheckboxItem>
-))
-MenubarCheckboxItem.displayName = MenubarPrimitive.CheckboxItem.displayName
-
-const MenubarRadioItem = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.RadioItem>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.RadioItem>
->(({ className, children, ...props }, ref) => (
-  <MenubarPrimitive.RadioItem
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
-    {...props}
-  >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <MenubarPrimitive.ItemIndicator>
-        <Circle className="h-2 w-2 fill-current" />
-      </MenubarPrimitive.ItemIndicator>
-    </span>
-    {children}
-  </MenubarPrimitive.RadioItem>
-))
-MenubarRadioItem.displayName = MenubarPrimitive.RadioItem.displayName
-
-const MenubarLabel = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Label> & {
-    inset?: boolean
-  }
->(({ className, inset, ...props }, ref) => (
-  <MenubarPrimitive.Label
-    ref={ref}
-    className={cn(
-      "px-2 py-1.5 text-sm font-semibold",
-      inset && "pl-8",
-      className
-    )}
-    {...props}
-  />
-))
-MenubarLabel.displayName = MenubarPrimitive.Label.displayName
-
-const MenubarSeparator = React.forwardRef<
-  React.ElementRef<typeof MenubarPrimitive.Separator>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Separator>
->(({ className, ...props }, ref) => (
-  <MenubarPrimitive.Separator
-    ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-muted", className)}
-    {...props}
-  />
-))
-MenubarSeparator.displayName = MenubarPrimitive.Separator.displayName
-
-const MenubarShortcut = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLSpanElement>) => {
+export function Menubar({ items, style }: MenubarProps) {
   return (
-    <span
-      className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground",
-        className
-      )}
-      {...props}
-    />
-  )
+    <View style={[styles.menuBar, style]}>
+      {items.map((item, idx) => (
+        <MenubarButton key={item.label + idx} item={item} />
+      ))}
+    </View>
+  );
 }
-MenubarShortcut.displayname = "MenubarShortcut"
 
-export {
-  Menubar,
-  MenubarMenu,
-  MenubarTrigger,
-  MenubarContent,
-  MenubarItem,
-  MenubarSeparator,
-  MenubarLabel,
-  MenubarCheckboxItem,
-  MenubarRadioGroup,
-  MenubarRadioItem,
-  MenubarPortal,
-  MenubarSubContent,
-  MenubarSubTrigger,
-  MenubarGroup,
-  MenubarSub,
-  MenubarShortcut,
+function MenubarButton({ item }: { item: MenubarItem }) {
+  const [open, setOpen] = React.useState(false);
+  const hasSubmenu = !!item.submenu && item.submenu.length > 0;
+
+  const handlePress = () => {
+    if (hasSubmenu) setOpen((o) => !o);
+    else item.onPress && item.onPress();
+  };
+
+  return (
+    <View style={styles.menuBtnWrapper}>
+      <TouchableOpacity
+        style={styles.menuBtn}
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        {item.icon && <View style={{ marginRight: 6 }}>{item.icon}</View>}
+        <Text style={styles.menuBtnText}>{item.label}</Text>
+        {hasSubmenu && (
+          <Feather
+            name={open ? "chevron-up" : "chevron-down"}
+            size={16}
+            color="#888"
+            style={{ marginLeft: 4 }}
+          />
+        )}
+        {typeof item.checked === "boolean" && (
+          <Feather
+            name={item.checked ? "check" : "circle"}
+            size={16}
+            color={item.checked ? "#007aff" : "#ccc"}
+            style={{ marginLeft: 4 }}
+          />
+        )}
+        {item.shortcut && (
+          <Text style={styles.shortcutText}>{item.shortcut}</Text>
+        )}
+      </TouchableOpacity>
+      {hasSubmenu && (
+        <Modal
+          visible={open}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setOpen(false)}
+        >
+          <TouchableOpacity style={styles.submenuOverlay} onPress={() => setOpen(false)}>
+            <View style={styles.submenuBox}>
+              {item.submenu!.map((sub, subIdx) => (
+                <TouchableOpacity
+                  key={sub.label + subIdx}
+                  style={styles.submenuItem}
+                  onPress={() => {
+                    setOpen(false);
+                    sub.onPress && sub.onPress();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  {sub.icon && <View style={{ marginRight: 6 }}>{sub.icon}</View>}
+                  <Text style={styles.menuBtnText}>{sub.label}</Text>
+                  {typeof sub.checked === "boolean" && (
+                    <Feather
+                      name={sub.checked ? "check" : "circle"}
+                      size={16}
+                      color={sub.checked ? "#007aff" : "#ccc"}
+                      style={{ marginLeft: 4 }}
+                    />
+                  )}
+                  {sub.shortcut && (
+                    <Text style={styles.shortcutText}>{sub.shortcut}</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  menuBar: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    marginBottom: 2,
+  },
+  menuBtnWrapper: {
+    marginHorizontal: 3,
+  },
+  menuBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: "#f7f7f7",
+    borderWidth: 1,
+    borderColor: "#eee",
+    minWidth: 48,
+  },
+  menuBtnText: {
+    fontSize: 15,
+    color: "#333",
+    fontWeight: "500",
+  },
+  shortcutText: {
+    marginLeft: 10,
+    color: "#aaa",
+    fontSize: 12,
+    letterSpacing: 1,
+  },
+  submenuOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.10)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  submenuBox: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    minWidth: 180,
+    maxWidth: 260,
+    width: "75%",
+    shadowColor: "#000",
+    shadowOpacity: 0.13,
+    shadowRadius: 14,
+    elevation: 5,
+    alignSelf: "center",
+    paddingVertical: 8,
+  },
+  submenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+});

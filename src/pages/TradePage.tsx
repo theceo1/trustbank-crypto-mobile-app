@@ -1,31 +1,18 @@
-
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ArrowUpDown, ArrowDown, ArrowUp, Search, Filter, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useNavigation } from "@react-navigation/native";
+import { Feather, FontAwesome5, MaterialIcons, AntDesign } from '@expo/vector-icons';
+import { View, Image, Text } from "react-native";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Select, 
-  SelectContent, 
-  SelectGroup, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Picker } from '@react-native-picker/picker';
 import { Slider } from "@/components/ui/slider";
 import BottomNavigation from "@/components/BottomNavigation";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { LineChart, Grid } from "react-native-svg-charts";
+import * as shape from "d3-shape";
+import Svg, { LinearGradient, Stop, Defs } from "react-native-svg";
 
 const pairs = [
   { pair: "BTC/USDT", price: "61,245.32", change: 2.4, iconUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
@@ -36,20 +23,10 @@ const pairs = [
   { pair: "DOT/USDT", price: "7.82", change: 3.1, iconUrl: "https://cryptologos.cc/logos/polkadot-new-dot-logo.png" },
 ];
 
-const mockChartData = [
-  { time: "9:00", price: 61000 },
-  { time: "10:00", price: 61200 },
-  { time: "11:00", price: 61100 },
-  { time: "12:00", price: 61400 },
-  { time: "13:00", price: 61350 },
-  { time: "14:00", price: 61500 },
-  { time: "15:00", price: 61700 },
-  { time: "16:00", price: 61900 },
-  { time: "17:00", price: 61800 },
-];
+const mockChartData = [61000, 61200, 61100, 61400, 61350, 61500, 61700, 61900, 61800];
 
 const TradePage = () => {
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPair, setSelectedPair] = useState("BTC/USDT");
@@ -79,295 +56,241 @@ const TradePage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Header */}
-      <header className="ios-header">
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/dashboard")}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold ml-2">Trade</h1>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" onClick={() => setTimeRange(prev => prev === "day" ? "week" : "day")}>
-            <RefreshCw className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
+      <View style={{ paddingTop: 40, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Button
+          style={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0, margin: 0 }}
+          onPress={() => navigation.navigate("Dashboard" as never)}
+        >
+          <Feather name="chevron-left" size={20} />
+        </Button>
+        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Trade</Text>
+        <Button style={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0, margin: 0 }} onPress={() => setTimeRange(prev => prev === "day" ? "week" : "day")}> 
+          <Feather name="refresh-cw" size={20} />
+        </Button>
+      </View>
 
       {/* Main Content */}
-      <main className="screen-container animate-fade-in">
+      <View style={{ flex: 1, padding: 16 }}>
         {/* Chart Section */}
-        <section className="mb-6">
-          <Card className="chart-card mb-4">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center">
-                <img 
-                  src={currentPair?.iconUrl}
-                  alt={selectedPair.split('/')[0]}
-                  className="h-8 w-8 mr-2 bg-white p-1 rounded-full"
-                />
-                <div>
-                  <h2 className="text-lg font-bold">{selectedPair}</h2>
-                  <div className="flex items-center">
-                    <span className="text-lg font-semibold">${currentPair?.price}</span>
-                    <span 
-                      className={`ml-2 text-sm ${currentPair?.change && currentPair.change >= 0 ? 'text-green-500' : 'text-red-500'} flex items-center`}
-                    >
-                      {currentPair?.change && currentPair.change >= 0 ? (
-                        <ArrowUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <ArrowDown className="h-3 w-3 mr-1" />
-                      )}
+        <Card style={{ marginBottom: 24, padding: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image 
+                source={{ uri: currentPair?.iconUrl }}
+                style={{ height: 32, width: 32, marginRight: 8, backgroundColor: '#fff', borderRadius: 16, padding: 2 }}
+              />
+              <View>
+                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{selectedPair}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '600' }}>${currentPair?.price}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                    {currentPair?.change && currentPair.change >= 0 ? (
+                      <Feather name="arrow-up" size={12} color="#10b981" style={{ marginRight: 4 }} />
+                    ) : (
+                      <Feather name="arrow-down" size={12} color="#ef4444" style={{ marginRight: 4 }} />
+                    )}
+                    <Text style={{ fontSize: 12, color: currentPair?.change && currentPair.change >= 0 ? '#10b981' : '#ef4444' }}>
                       {currentPair?.change && currentPair.change >= 0 ? '+' : ''}{currentPair?.change}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <Select
-                value={selectedPair}
-                onValueChange={setSelectedPair}
-              >
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder="Select Pair" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {pairs.map((p) => (
-                      <SelectItem key={p.pair} value={p.pair}>{p.pair}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockChartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} />
-                  <YAxis 
-                    domain={['dataMin - 200', 'dataMax + 200']}
-                    axisLine={false}
-                    tickLine={false}
-                    orientation="right"
-                    tickFormatter={(value) => `$${value.toLocaleString()}`}
-                  />
-                  <Tooltip
-                    formatter={(value) => [`$${Number(value).toLocaleString()}`, "Price"]}
-                    labelFormatter={(label) => `Time: ${label}`}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="price"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex mt-4">
-              <Button 
-                variant={timeRange === "day" ? "default" : "outline"} 
-                size="sm" 
-                className="mr-1" 
-                onClick={() => setTimeRange("day")}
-              >
-                24H
-              </Button>
-              <Button 
-                variant={timeRange === "week" ? "default" : "outline"} 
-                size="sm" 
-                className="mr-1" 
-                onClick={() => setTimeRange("week")}
-              >
-                1W
-              </Button>
-              <Button 
-                variant={timeRange === "month" ? "default" : "outline"} 
-                size="sm" 
-                className="mr-1" 
-                onClick={() => setTimeRange("month")}
-              >
-                1M
-              </Button>
-              <Button 
-                variant={timeRange === "year" ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setTimeRange("year")}
-              >
-                1Y
-              </Button>
-            </div>
-          </Card>
-        </section>
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+            <Picker
+              selectedValue={selectedPair}
+              onValueChange={setSelectedPair}
+              style={{ height: 48, width: '100%' }}
+            >
+              {pairs.map((pair) => (
+                <Picker.Item key={pair.pair} label={pair.pair} value={pair.pair} />
+              ))}
+            </Picker>
+          </View>
+          <View style={{ height: 180 }}>
+            <Svg width={180} height={180} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+              <Defs>
+                <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                  <Stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </LinearGradient>
+              </Defs>
+            </Svg>
+            <LineChart
+              style={{ height: 180 }}
+              data={mockChartData}
+              contentInset={{ top: 20, bottom: 20 }}
+              curve={shape.curveMonotoneX}
+              svg={{ stroke: 'url(#chartGradient)', strokeWidth: 2 }}
+            >
+              <Grid />
+            </LineChart>
+          </View>
+          <View style={{ flexDirection: 'row', marginTop: 16 }}>
+            <Button 
+              style={{ marginRight: 4, backgroundColor: timeRange === "day" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
+              onPress={() => setTimeRange("day")}
+            >
+              <Text style={{ color: timeRange === "day" ? '#fff' : '#10b981' }}>24H</Text>
+            </Button>
+            <Button 
+              style={{ marginRight: 4, backgroundColor: timeRange === "week" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
+              onPress={() => setTimeRange("week")}
+            >
+              <Text style={{ color: timeRange === "week" ? '#fff' : '#10b981' }}>1W</Text>
+            </Button>
+            <Button 
+              style={{ marginRight: 4, backgroundColor: timeRange === "month" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
+              onPress={() => setTimeRange("month")}
+            >
+              <Text style={{ color: timeRange === "month" ? '#fff' : '#10b981' }}>1M</Text>
+            </Button>
+            <Button 
+              style={{ backgroundColor: timeRange === "year" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
+              onPress={() => setTimeRange("year")}
+            >
+              <Text style={{ color: timeRange === "year" ? '#fff' : '#10b981' }}>1Y</Text>
+            </Button>
+          </View>
+        </Card>
 
         {/* Trading Interface */}
-        <section className="mb-6">
-          <Tabs defaultValue="buy" className="w-full">
-            <TabsList className="grid grid-cols-2 mb-4">
-              <TabsTrigger 
-                value="buy" 
-                className="data-[state=active]:bg-green-500 data-[state=active]:text-white"
-                onClick={() => setTradeType("buy")}
+        <Tabs value="buy" onValueChange={setTradeType}>
+          <TabsList>
+            <TabsTrigger 
+              tabValue="buy" 
+              style={{ backgroundColor: tradeType === "buy" ? '#10b981' : '#fff', color: tradeType === "buy" ? '#fff' : '#10b981', flex: 1 }}
+            >
+              Buy
+            </TabsTrigger>
+            <TabsTrigger 
+              tabValue="sell" 
+              style={{ backgroundColor: tradeType === "sell" ? '#ef4444' : '#fff', color: tradeType === "sell" ? '#fff' : '#ef4444', flex: 1 }}
+            >
+              Sell
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent tabValue="buy">
+            <Card style={{ padding: 16 }}>
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Amount ({selectedPair.split('/')[0]})</Text>
+                <Input
+  value={amount.toString()}
+  onChangeText={text => setAmount(Number(text))}
+  keyboardType="numeric"
+  style={{}}
+/>
+                <Slider
+                  value={[amount]}
+                  max={maxAmount}
+                  step={0.001}
+                  onValueChange={handleAmountChange}
+                  style={{ marginVertical: 16 }}
+                />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 12, color: '#888' }}>Min: 0</Text>
+                  <Text style={{ fontSize: 12, color: '#888' }}>Max: {maxAmount}</Text>
+                </View>
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Estimated Cost (USDT)</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold' }}>${(amount * Number(currentPair?.price.replace(',', ''))).toFixed(2)}</Text>
+              </View>
+              <Button 
+                style={{ width: '100%', backgroundColor: '#10b981' }}
+                onPress={executeOrder}
+                disabled={amount <= 0}
               >
-                Buy
-              </TabsTrigger>
-              <TabsTrigger 
-                value="sell" 
-                className="data-[state=active]:bg-red-500 data-[state=active]:text-white"
-                onClick={() => setTradeType("sell")}
+                <Text style={{ color: '#fff' }}>Buy {selectedPair.split('/')[0]}</Text>
+              </Button>
+            </Card>
+          </TabsContent>
+          <TabsContent tabValue="sell">
+            <Card style={{ padding: 16 }}>
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Amount ({selectedPair.split('/')[0]})</Text>
+                <Input
+  value={amount.toString()}
+  onChangeText={text => setAmount(Number(text))}
+  keyboardType="numeric"
+  style={{}}
+/>
+                <Slider
+                  value={[amount]}
+                  max={maxAmount}
+                  step={0.001}
+                  onValueChange={handleAmountChange}
+                  style={{ marginVertical: 16 }}
+                />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 12, color: '#888' }}>Min: 0</Text>
+                  <Text style={{ fontSize: 12, color: '#888' }}>Max: {maxAmount}</Text>
+                </View>
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Estimated Proceeds (USDT)</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold' }}>${(amount * Number(currentPair?.price.replace(',', ''))).toFixed(2)}</Text>
+              </View>
+              <Button 
+                style={{ width: '100%', backgroundColor: '#ef4444' }}
+                onPress={executeOrder}
+                disabled={amount <= 0}
               >
-                Sell
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="buy" className="space-y-4">
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Amount ({selectedPair.split('/')[0]})</p>
-                    <div className="flex items-center mb-2">
-                      <Input 
-                        type="number" 
-                        value={amount} 
-                        onChange={(e) => setAmount(Number(e.target.value))} 
-                        min={0} 
-                        max={maxAmount}
-                        step={0.001}
-                      />
-                    </div>
-                    <Slider
-                      value={[amount]}
-                      max={maxAmount}
-                      step={0.001}
-                      onValueChange={handleAmountChange}
-                      className="my-6"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Min: 0</span>
-                      <span>Max: {maxAmount}</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Estimated Cost (USDT)</p>
-                    <p className="text-xl font-bold">${(amount * Number(currentPair?.price.replace(',', ''))).toFixed(2)}</p>
-                  </div>
-                  
-                  <Button 
-                    className="w-full bg-green-500 hover:bg-green-600"
-                    onClick={executeOrder}
-                    disabled={amount <= 0}
-                  >
-                    Buy {selectedPair.split('/')[0]}
-                  </Button>
-                </div>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="sell" className="space-y-4">
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Amount ({selectedPair.split('/')[0]})</p>
-                    <div className="flex items-center mb-2">
-                      <Input 
-                        type="number" 
-                        value={amount} 
-                        onChange={(e) => setAmount(Number(e.target.value))} 
-                        min={0} 
-                        max={maxAmount}
-                        step={0.001}
-                      />
-                    </div>
-                    <Slider
-                      value={[amount]}
-                      max={maxAmount}
-                      step={0.001}
-                      onValueChange={handleAmountChange}
-                      className="my-6"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Min: 0</span>
-                      <span>Max: {maxAmount}</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Estimated Proceeds (USDT)</p>
-                    <p className="text-xl font-bold">${(amount * Number(currentPair?.price.replace(',', ''))).toFixed(2)}</p>
-                  </div>
-                  
-                  <Button 
-                    className="w-full bg-red-500 hover:bg-red-600"
-                    onClick={executeOrder}
-                    disabled={amount <= 0}
-                  >
-                    Sell {selectedPair.split('/')[0]}
-                  </Button>
-                </div>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </section>
+                <Text style={{ color: '#fff' }}>Sell {selectedPair.split('/')[0]}</Text>
+              </Button>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Market Pairs */}
-        <section className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Trading Pairs</h2>
-            <div className="relative">
-              <Search className="absolute left-3 top-2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                className="pl-10 h-8 w-36" 
-                placeholder="Search..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-          <Card className="bg-card overflow-hidden">
-            <div className="divide-y divide-border">
-              {filteredPairs.map((pair) => (
-                <div 
-                  key={pair.pair} 
-                  className={`flex items-center justify-between p-4 cursor-pointer ${selectedPair === pair.pair ? 'bg-muted' : ''}`}
-                  onClick={() => setSelectedPair(pair.pair)}
-                >
-                  <div className="flex items-center">
-                    <img 
-                      src={pair.iconUrl} 
-                      alt={pair.pair.split('/')[0]} 
-                      className="h-8 w-8 mr-3 bg-white p-1 rounded-full" 
-                    />
-                    <h3 className="font-medium">{pair.pair}</h3>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">${pair.price}</p>
-                    <p className={`text-sm ${pair.change >= 0 ? 'text-green-500' : 'text-red-500'} flex items-center justify-end`}>
-                      {pair.change >= 0 ? (
-                        <ArrowUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <ArrowDown className="h-3 w-3 mr-1" />
-                      )}
+        <View style={{ marginTop: 24 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Trading Pairs</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 8 }}>
+              <Feather name="search" size={16} color="#888" style={{ marginRight: 4 }} />
+              <Input
+  style={{ height: 32, width: 120 }}
+  placeholder="Search..."
+  value={searchQuery}
+  onChangeText={setSearchQuery}
+/>
+            </View>
+          </View>
+          <Card style={{ backgroundColor: '#fff', overflow: 'hidden' }}>
+            {filteredPairs.map((pair) => (
+              <View 
+                key={pair.pair} 
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: selectedPair === pair.pair ? '#f3f4f6' : '#fff' }}
+                onTouchEnd={() => setSelectedPair(pair.pair)}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image 
+                    source={{ uri: pair.iconUrl }} 
+                    style={{ height: 32, width: 32, marginRight: 12, backgroundColor: '#fff', borderRadius: 16, padding: 2 }} 
+                  />
+                  <Text style={{ fontWeight: '500' }}>{pair.pair}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={{ fontWeight: '500' }}>${pair.price}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {pair.change >= 0 ? (
+                      <Feather name="arrow-up" size={12} color="#10b981" style={{ marginRight: 2 }} />
+                    ) : (
+                      <Feather name="arrow-down" size={12} color="#ef4444" style={{ marginRight: 2 }} />
+                    )}
+                    <Text style={{ fontSize: 12, color: pair.change >= 0 ? '#10b981' : '#ef4444' }}>
                       {pair.change >= 0 ? '+' : ''}{pair.change}%
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ))}
           </Card>
-        </section>
-      </main>
-
-      {/* Bottom Navigation */}
+        </View>
+      </View>
       <BottomNavigation />
-    </div>
+    </View>
   );
 };
 

@@ -1,42 +1,80 @@
-import * as React from "react"
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
-import { Circle } from "lucide-react"
+import * as React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
-import { cn } from "@/lib/utils"
+export interface RadioGroupOption {
+  label: string;
+  value: string;
+  disabled?: boolean;
+}
 
-const RadioGroup = React.forwardRef<
-  React.ElementRef<typeof RadioGroupPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
->(({ className, ...props }, ref) => {
+export interface RadioGroupProps {
+  options: RadioGroupOption[];
+  value: string;
+  onChange: (value: string) => void;
+  style?: any;
+  itemStyle?: any;
+}
+
+export function RadioGroup({ options, value, onChange, style, itemStyle }: RadioGroupProps) {
   return (
-    <RadioGroupPrimitive.Root
-      className={cn("grid gap-2", className)}
-      {...props}
-      ref={ref}
-    />
-  )
-})
-RadioGroup.displayName = RadioGroupPrimitive.Root.displayName
+    <View style={[styles.group, style]}>
+      {options.map((option) => (
+        <TouchableOpacity
+          key={option.value}
+          style={[styles.radioItem, itemStyle, option.disabled && styles.disabled]}
+          onPress={() => !option.disabled && onChange(option.value)}
+          disabled={option.disabled}
+          accessibilityRole="radio"
+          accessibilityState={{ selected: value === option.value, disabled: !!option.disabled }}
+        >
+          <View style={[styles.radioCircle, value === option.value && styles.radioCircleChecked, option.disabled && styles.radioCircleDisabled]}>
+            {value === option.value && <Feather name="circle" size={16} color="#007aff" />}
+          </View>
+          <Text style={[styles.radioLabel, option.disabled && styles.disabledLabel]}>{option.label}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
 
-const RadioGroupItem = React.forwardRef<
-  React.ElementRef<typeof RadioGroupPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
->(({ className, ...props }, ref) => {
-  return (
-    <RadioGroupPrimitive.Item
-      ref={ref}
-      className={cn(
-        "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
-      {...props}
-    >
-      <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Circle className="h-2.5 w-2.5 fill-current text-current" />
-      </RadioGroupPrimitive.Indicator>
-    </RadioGroupPrimitive.Item>
-  )
-})
-RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
-
-export { RadioGroup, RadioGroupItem }
+const styles = StyleSheet.create({
+  group: {
+    flexDirection: "column",
+    gap: 8,
+  },
+  radioItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  radioCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#007aff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    backgroundColor: "#fff",
+  },
+  radioCircleChecked: {
+    backgroundColor: "#e8f0fe",
+    borderColor: "#007aff",
+  },
+  radioCircleDisabled: {
+    borderColor: "#ccc",
+    backgroundColor: "#f5f5f5",
+  },
+  radioLabel: {
+    fontSize: 16,
+    color: "#222",
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  disabledLabel: {
+    color: "#aaa",
+  },
+});

@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Save, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useNavigation } from "@react-navigation/native";
+
+import Button from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import BottomNavigation from "@/components/BottomNavigation";
+import { ScrollView, TextInput, View, Text, Image } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 
 // Mock exchange rates for crypto currencies
 const exchangeRates = {
@@ -36,7 +31,7 @@ const cryptoIcons = {
 };
 
 const CalculatorPage = () => {
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const { toast } = useToast();
   
   // Calculator state
@@ -51,6 +46,9 @@ const CalculatorPage = () => {
   const [fromAmount, setFromAmount] = useState("1");
   const [toAmount, setToAmount] = useState("");
   
+  // Tab state for switching between calculator and converter
+  const [displayTab, setDisplayTab] = useState<'calculator' | 'converter'>('calculator');
+
   // Calculate conversion
   useEffect(() => {
     if (fromCrypto in exchangeRates && toCrypto in exchangeRates[fromCrypto as keyof typeof exchangeRates]) {
@@ -155,336 +153,217 @@ const CalculatorPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <View style={styles.container}>
       {/* Header */}
-      <header className="ios-header">
-        <div className="flex items-center">
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/dashboard")}
+            variant="outline"
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate("Dashboard" as never)}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <Text style={{fontSize: 22}}>{'<'} </Text>
           </Button>
-          <h1 className="text-lg font-semibold ml-2">Calculator</h1>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" onClick={saveCalculation}>
-            <Save className="h-5 w-5" />
+          <Text style={styles.headerTitle}>Calculator</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <Button variant="outline" style={styles.headerIconBtn} onPress={saveCalculation}>
+            <Text style={{fontSize: 20}}>💾</Text>
           </Button>
-        </div>
-      </header>
+        </View>
+      </View>
 
       {/* Main Content */}
-      <main className="screen-container animate-fade-in">
-        <Tabs defaultValue="calculator" className="w-full">
-          <TabsList className="grid grid-cols-2 mb-6">
-            <TabsTrigger value="calculator">Calculator</TabsTrigger>
-            <TabsTrigger value="converter">Crypto Converter</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="calculator" className="space-y-6">
-            <Card className="p-4">
-              <div className="bg-card rounded-lg p-4 mb-4">
-                <div className="text-right text-4xl font-bold overflow-hidden">{display}</div>
-                {operation && previousValue !== null && (
-                  <div className="text-right text-sm text-muted-foreground mt-1">
-                    {previousValue} {operation}
-                  </div>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-4 gap-2">
-                {/* First row */}
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium bg-muted"
-                  onClick={clearDisplay}
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }}>
+        {/* Tabs - custom for mobile */}
+        <View style={styles.tabsList}>
+          <Button
+            variant={displayTab === 'calculator' ? 'primary' : 'outline'}
+            style={[styles.tabBtn, displayTab === 'calculator' && styles.tabBtnActive]}
+            onPress={() => setDisplayTab('calculator')}
+          >
+            <Text style={styles.tabText}>Calculator</Text>
+          </Button>
+          <Button
+            variant={displayTab === 'converter' ? 'primary' : 'outline'}
+            style={[styles.tabBtn, displayTab === 'converter' && styles.tabBtnActive]}
+            onPress={() => setDisplayTab('converter')}
+          >
+            <Text style={styles.tabText}>Crypto Converter</Text>
+          </Button>
+        </View>
+
+        {/* Calculator Tab */}
+        {displayTab === 'calculator' && (
+          <Card style={styles.card}>
+            <View style={styles.displayBox}>
+              <Text style={styles.displayText}>{display}</Text>
+              {operation && previousValue !== null && (
+                <Text style={styles.displaySubText}>
+                  {previousValue} {operation}
+                </Text>
+              )}
+            </View>
+            <View style={styles.keypadGrid}>
+              {/* First row */}
+              <Button variant="outline" style={styles.keyBtn} onPress={clearDisplay}><Text style={styles.keyBtnText}>C</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={toggleSign}><Text style={styles.keyBtnText}>+/-</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={handlePercentage}><Text style={styles.keyBtnText}>%</Text></Button>
+              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={() => performOperation('÷')}><Text style={styles.keyBtnText}>÷</Text></Button>
+              {/* Second row */}
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('7')}><Text style={styles.keyBtnText}>7</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('8')}><Text style={styles.keyBtnText}>8</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('9')}><Text style={styles.keyBtnText}>9</Text></Button>
+              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={() => performOperation('×')}><Text style={styles.keyBtnText}>×</Text></Button>
+              {/* Third row */}
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('4')}><Text style={styles.keyBtnText}>4</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('5')}><Text style={styles.keyBtnText}>5</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('6')}><Text style={styles.keyBtnText}>6</Text></Button>
+              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={() => performOperation('-')}><Text style={styles.keyBtnText}>-</Text></Button>
+              {/* Fourth row */}
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('1')}><Text style={styles.keyBtnText}>1</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('2')}><Text style={styles.keyBtnText}>2</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('3')}><Text style={styles.keyBtnText}>3</Text></Button>
+              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={() => performOperation('+')}><Text style={styles.keyBtnText}>+</Text></Button>
+              {/* Fifth row */}
+              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnDouble]} onPress={() => inputDigit('0')}><Text style={styles.keyBtnText}>0</Text></Button>
+              <Button variant="outline" style={styles.keyBtn} onPress={inputDot}><Text style={styles.keyBtnText}>.</Text></Button>
+              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={handleEquals}><Text style={styles.keyBtnText}>=</Text></Button>
+            </View>
+          </Card>
+        )}
+
+        {/* Converter Tab */}
+        {displayTab === 'converter' && (
+          <Card style={styles.card}>
+            <View style={styles.converterSection}>
+              {/* From Currency */}
+              <Text style={styles.label}>From</Text>
+              <View style={styles.pickerRow}>
+                <Image source={{ uri: cryptoIcons[fromCrypto] }} style={styles.cryptoIcon} />
+                <Picker
+                  selectedValue={fromCrypto}
+                  style={styles.picker}
+                  onValueChange={setFromCrypto}
                 >
-                  C
+                  {Object.keys(exchangeRates).map(currency => (
+                    <Picker.Item key={currency} label={currency} value={currency} />
+                  ))}
+                  <Picker.Item label="USD" value="USD" />
+                  <Picker.Item label="EUR" value="EUR" />
+                  <Picker.Item label="GBP" value="GBP" />
+                </Picker>
+              </View>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={fromAmount}
+                onChangeText={setFromAmount}
+              />
+              {/* Swap button */}
+              <View style={styles.swapRow}>
+                <Button variant="outline" style={styles.swapBtn} onPress={() => {
+                  const temp = fromCrypto;
+                  setFromCrypto(toCrypto);
+                  setToCrypto(temp);
+                  setFromAmount(toAmount);
+                }}>
+                  <Text style={{fontSize: 20}}>🔄</Text>
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium bg-muted"
-                  onClick={toggleSign}
+              </View>
+              {/* To Currency */}
+              <Text style={styles.label}>To</Text>
+              <View style={styles.pickerRow}>
+                <Image source={{ uri: cryptoIcons[toCrypto] }} style={styles.cryptoIcon} />
+                <Picker
+                  selectedValue={toCrypto}
+                  style={styles.picker}
+                  onValueChange={setToCrypto}
                 >
-                  +/-
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium bg-muted"
-                  onClick={handlePercentage}
-                >
-                  %
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium bg-brand-600 hover:bg-brand-700 text-white"
-                  onClick={() => performOperation("÷")}
-                >
-                  ÷
-                </Button>
-                
-                {/* Second row */}
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("7")}
-                >
-                  7
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("8")}
-                >
-                  8
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("9")}
-                >
-                  9
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium bg-brand-600 hover:bg-brand-700 text-white"
-                  onClick={() => performOperation("×")}
-                >
-                  ×
-                </Button>
-                
-                {/* Third row */}
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("4")}
-                >
-                  4
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("5")}
-                >
-                  5
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("6")}
-                >
-                  6
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium bg-brand-600 hover:bg-brand-700 text-white"
-                  onClick={() => performOperation("-")}
-                >
-                  -
-                </Button>
-                
-                {/* Fourth row */}
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("1")}
-                >
-                  1
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("2")}
-                >
-                  2
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={() => inputDigit("3")}
-                >
-                  3
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium bg-brand-600 hover:bg-brand-700 text-white"
-                  onClick={() => performOperation("+")}
-                >
-                  +
-                </Button>
-                
-                {/* Fifth row */}
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium col-span-2"
-                  onClick={() => inputDigit("0")}
-                >
-                  0
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium"
-                  onClick={inputDot}
-                >
-                  .
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-14 text-lg font-medium bg-brand-600 hover:bg-brand-700 text-white"
-                  onClick={handleEquals}
-                >
-                  =
-                </Button>
-              </div>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="converter" className="space-y-6">
-            <Card className="p-4">
-              <div className="space-y-6">
-                {/* From Currency */}
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                    From
-                  </label>
-                  <div className="space-y-2">
-                    <Select value={fromCrypto} onValueChange={setFromCrypto}>
-                      <SelectTrigger className="w-full">
-                        <div className="flex items-center">
-                          {fromCrypto in cryptoIcons && (
-                            <img
-                              src={cryptoIcons[fromCrypto as keyof typeof cryptoIcons]}
-                              alt={fromCrypto}
-                              className="w-5 h-5 mr-2 bg-white rounded-full"
-                            />
-                          )}
-                          <SelectValue placeholder="Select currency" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(exchangeRates).map(currency => (
-                          <SelectItem key={currency} value={currency}>
-                            <div className="flex items-center">
-                              <img
-                                src={cryptoIcons[currency as keyof typeof cryptoIcons]}
-                                alt={currency}
-                                className="w-5 h-5 mr-2 bg-white rounded-full"
-                              />
-                              {currency}
-                            </div>
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <div className="relative">
-                      <input
-                        type="number"
-                        className="w-full p-3 rounded-md border border-input bg-background"
-                        value={fromAmount}
-                        onChange={(e) => setFromAmount(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Swap button */}
-                <div className="flex justify-center">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="rounded-full"
-                    onClick={() => {
-                      const temp = fromCrypto;
-                      setFromCrypto(toCrypto);
-                      setToCrypto(temp);
-                      setFromAmount(toAmount);
-                    }}
-                  >
-                    <RotateCcw className="h-5 w-5" />
-                  </Button>
-                </div>
-                
-                {/* To Currency */}
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                    To
-                  </label>
-                  <div className="space-y-2">
-                    <Select value={toCrypto} onValueChange={setToCrypto}>
-                      <SelectTrigger className="w-full">
-                        <div className="flex items-center">
-                          {toCrypto in cryptoIcons && (
-                            <img
-                              src={cryptoIcons[toCrypto as keyof typeof cryptoIcons]}
-                              alt={toCrypto}
-                              className="w-5 h-5 mr-2 bg-white rounded-full"
-                            />
-                          )}
-                          <SelectValue placeholder="Select currency" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(exchangeRates).map(currency => (
-                          <SelectItem key={currency} value={currency}>
-                            <div className="flex items-center">
-                              <img
-                                src={cryptoIcons[currency as keyof typeof cryptoIcons]}
-                                alt={currency}
-                                className="w-5 h-5 mr-2 bg-white rounded-full"
-                              />
-                              {currency}
-                            </div>
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <div className="relative">
-                      <input
-                        type="text"
-                        className="w-full p-3 rounded-md border border-input bg-background"
-                        value={toAmount}
-                        readOnly
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  <p className="font-medium">Exchange Rate</p>
-                  <p>
-                    1 {fromCrypto} = {
-                      fromCrypto in exchangeRates && 
-                      toCrypto in exchangeRates[fromCrypto as keyof typeof exchangeRates] ?
+                  {Object.keys(exchangeRates).map(currency => (
+                    <Picker.Item key={currency} label={currency} value={currency} />
+                  ))}
+                  <Picker.Item label="USD" value="USD" />
+                  <Picker.Item label="EUR" value="EUR" />
+                  <Picker.Item label="GBP" value="GBP" />
+                </Picker>
+              </View>
+              <TextInput
+                style={styles.input}
+                value={toAmount}
+                editable={false}
+              />
+              <View style={styles.exchangeRateBox}>
+                <Text style={styles.exchangeRateLabel}>Exchange Rate</Text>
+                <Text style={styles.exchangeRateText}>
+                  1 {fromCrypto} = {
+                    fromCrypto in exchangeRates &&
+                    toCrypto in exchangeRates[fromCrypto as keyof typeof exchangeRates] ?
                       exchangeRates[fromCrypto as keyof typeof exchangeRates][toCrypto as keyof typeof exchangeRates[keyof typeof exchangeRates]].toFixed(2) :
                       "N/A"
-                    } {toCrypto}
-                  </p>
-                </div>
-              </div>
-            </Card>
-            
-            <div className="text-sm text-muted-foreground">
-              <p>• Exchange rates updated as of April 14, 2025</p>
-              <p>• All conversions are approximate and for reference only</p>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </main>
+                  } {toCrypto}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.converterNoteBox}>
+              <Text style={styles.noteText}>• Exchange rates updated as of April 14, 2025</Text>
+            </View>
+          </Card>
+        )}
+      </ScrollView>
 
       {/* Bottom Navigation */}
       <BottomNavigation />
-    </div>
+    </View>
   );
 };
+
+import { StyleSheet } from 'react-native';
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f8fafc' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center' },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  headerTitle: { fontSize: 20, fontWeight: '600', marginLeft: 12 },
+  headerIconBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 4 },
+  content: { flex: 1, backgroundColor: '#f8fafc' },
+  tabsList: { flexDirection: 'row', marginTop: 8, marginBottom: 16, justifyContent: 'center' },
+  tabBtn: { flex: 1, marginHorizontal: 4, borderRadius: 20, paddingVertical: 10 },
+  tabBtnActive: { backgroundColor: '#1a237e' },
+  tabText: { textAlign: 'center', fontSize: 16, fontWeight: '500', color: '#1a237e' },
+  card: { margin: 16, padding: 16, borderRadius: 16, backgroundColor: '#fff', elevation: 2 },
+  displayBox: { backgroundColor: '#f1f5f9', borderRadius: 12, padding: 16, marginBottom: 16 },
+  displayText: { fontSize: 40, fontWeight: 'bold', textAlign: 'right', color: '#111' },
+  displaySubText: { fontSize: 14, color: '#64748b', textAlign: 'right', marginTop: 4 },
+  keypadGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  keyBtn: { width: '22%', marginVertical: 6, aspectRatio: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 12, backgroundColor: '#f1f5f9' },
+  keyBtnText: { fontSize: 22, fontWeight: '600', color: '#1a237e' },
+  keyBtnOp: { backgroundColor: '#1a237e' },
+  keyBtnDouble: { width: '47%' },
+  converterSection: { marginTop: 8 },
+  label: { fontSize: 14, color: '#64748b', marginBottom: 6, fontWeight: '500' },
+  pickerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  cryptoIcon: { width: 28, height: 28, marginRight: 8, borderRadius: 14, backgroundColor: '#fff' },
+  picker: { flex: 1, height: 44 },
+  input: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#fff', marginBottom: 8 },
+  swapRow: { alignItems: 'center', marginVertical: 12 },
+  swapBtn: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center' },
+  exchangeRateBox: { marginTop: 8 },
+  exchangeRateLabel: { fontSize: 13, color: '#64748b', fontWeight: '500' },
+  exchangeRateText: { fontSize: 15, color: '#1a237e', fontWeight: '600' },
+  converterNoteBox: { marginTop: 14 },
+  noteText: { fontSize: 13, color: '#64748b', marginBottom: 2 },
+});
 
 export default CalculatorPage;

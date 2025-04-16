@@ -1,30 +1,16 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Search, Filter, Star, TrendingUp, TrendingDown, ArrowDown, ArrowUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useNavigation } from "@react-navigation/native";
+import { Feather, FontAwesome } from '@expo/vector-icons';
+import { View, Image, Text } from "react-native";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import BottomNavigation from "@/components/BottomNavigation";
-import {
-  Area,
-  AreaChart,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { AreaChart, LineChart, Grid } from "react-native-svg-charts";
+import * as shape from "d3-shape";
+import Svg, { Defs, LinearGradient, Stop } from "react-native-svg";
 
 // Mock Market Data
 const marketData = [
@@ -129,7 +115,7 @@ const marketData = [
 ];
 
 const MarketPage = () => {
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState("");
   const [data, setData] = useState(marketData);
   const [sortBy, setSortBy] = useState("marketCap");
@@ -179,9 +165,11 @@ const MarketPage = () => {
 
   const getSortIcon = (field: string) => {
     if (sortBy === field) {
-      return sortDirection === "asc" ? 
-        <ArrowUp className="h-4 w-4" /> : 
-        <ArrowDown className="h-4 w-4" />;
+      return sortDirection === "asc" ? (
+        <Feather name="arrow-up" size={16} />
+      ) : (
+        <Feather name="arrow-down" size={16} />
+      );
     }
     return null;
   };
@@ -196,191 +184,148 @@ const MarketPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Header */}
-      <header className="ios-header">
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/dashboard")}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold ml-2">Markets</h1>
-        </div>
-        <div className="flex items-center space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Filter className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
-                <DropdownMenuRadioItem value="marketCap">Market Cap</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="price">Price</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="change">24h Change</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="volume24h">24h Volume</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
+      <View style={{ paddingTop: 40, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
+        <Button
+          style={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0, margin: 0 }}
+          onPress={() => navigation.navigate("Dashboard" as never)}
+        >
+          <Feather name="chevron-left" size={20} />
+        </Button>
+        <View style={{ marginLeft: 8 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Market</Text>
+        </View>
+      </View>
 
       {/* Main Content */}
-      <main className="screen-container animate-fade-in">
+      <View style={{ flex: 1, padding: 16 }}>
         {/* Search bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input 
-            className="pl-10" 
-            placeholder="Search coins..." 
+        <View style={{ position: 'relative', marginBottom: 24 }}>
+          <Feather name="search" size={16} style={{ position: 'absolute', left: 12, top: 14, color: '#888' }} />
+          <Input
+            style={{ paddingLeft: 36 }}
+            placeholder="Search coins..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChangeText={setSearchQuery}
           />
-        </div>
+        </View>
 
         {/* Overview */}
-        <section className="mb-6">
-          <Card className="p-4">
-            <div className="flex justify-between mb-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Market Cap</p>
-                <p className="text-lg font-bold">$2.4T</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">24h Volume</p>
-                <p className="text-lg font-bold">$87.5B</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">BTC Dominance</p>
-                <p className="text-lg font-bold">43.2%</p>
-              </div>
-            </div>
-            <div className="mt-4 h-24">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[
-                  { date: "Apr 07", cap: 2.2 },
-                  { date: "Apr 08", cap: 2.25 },
-                  { date: "Apr 09", cap: 2.3 },
-                  { date: "Apr 10", cap: 2.32 },
-                  { date: "Apr 11", cap: 2.35 },
-                  { date: "Apr 12", cap: 2.38 },
-                  { date: "Apr 13", cap: 2.4 },
-                ]}>
-                  <defs>
-                    <linearGradient id="colorMarketCap" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <Tooltip />
-                  <Area type="monotone" dataKey="cap" stroke="#10b981" fillOpacity={1} fill="url(#colorMarketCap)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </section>
+        <Card style={{ padding: 16, marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+            <View>
+              <Text style={{ fontSize: 12, color: '#888' }}>Market Cap</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>$2.4T</Text>
+            </View>
+            <View>
+              <Text style={{ fontSize: 12, color: '#888' }}>24h Volume</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>$87.5B</Text>
+            </View>
+            <View>
+              <Text style={{ fontSize: 12, color: '#888' }}>BTC Dominance</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>43.2%</Text>
+            </View>
+          </View>
+          <View style={{ marginTop: 16, height: 96 }}>
+            <Svg width={96} height={96} style={StyleSheet.absoluteFill}>
+              <Defs>
+                <LinearGradient id="colorMarketCap" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                  <Stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </LinearGradient>
+              </Defs>
+            </Svg>
+            <AreaChart
+              style={{ height: 96 }}
+              data={[2.2, 2.25, 2.3, 2.32, 2.35, 2.38, 2.4]}
+              contentInset={{ top: 10, bottom: 10 }}
+              curve={shape.curveMonotoneX}
+              svg={{ fill: 'url(#colorMarketCap)' }}
+            >
+              <Grid />
+            </AreaChart>
+          </View>
+        </Card>
 
         {/* Tabs and Coin List */}
-        <section>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 mb-6">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="favorites">Favorites</TabsTrigger>
-              <TabsTrigger value="gainers">Gainers</TabsTrigger>
-              <TabsTrigger value="losers">Losers</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value={activeTab} className="space-y-6">
-              <div className="rounded-lg border border-border overflow-hidden">
-                {/* Table header */}
-                <div className="grid grid-cols-12 gap-2 p-3 bg-muted text-sm font-medium">
-                  <div className="col-span-5 flex items-center cursor-pointer" onClick={() => handleSort("name")}>
-                    Name {getSortIcon("name")}
-                  </div>
-                  <div className="col-span-3 text-right cursor-pointer" onClick={() => handleSort("price")}>
-                    Price {getSortIcon("price")}
-                  </div>
-                  <div className="col-span-4 text-right cursor-pointer" onClick={() => handleSort("change")}>
-                    24h Change {getSortIcon("change")}
-                  </div>
-                </div>
-                
-                {/* Data rows */}
-                <div className="divide-y divide-border">
-                  {data.length > 0 ? (
-                    data.map((coin) => (
-                      <div 
-                        key={coin.id}
-                        className="grid grid-cols-12 gap-2 p-4 items-center cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/market/${coin.id}`)}
-                      >
-                        <div className="col-span-5 flex items-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 mr-3"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite(coin.id);
-                            }}
-                          >
-                            <Star
-                              className={`h-4 w-4 ${coin.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
-                            />
-                          </Button>
-                          <img
-                            src={coin.iconUrl}
-                            alt={coin.name}
-                            className="h-8 w-8 mr-3 bg-white p-1 rounded-full"
-                          />
-                          <div>
-                            <p className="font-medium">{coin.name}</p>
-                            <p className="text-xs text-muted-foreground">{coin.symbol}</p>
-                          </div>
-                        </div>
-                        <div className="col-span-3 text-right">
-                          <p className="font-medium">${coin.price.toLocaleString()}</p>
-                        </div>
-                        <div className="col-span-2 text-right">
-                          <p className={`${coin.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {coin.change >= 0 ? '+' : ''}{coin.change}%
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <div className="h-10">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={coin.priceHistory.map((price, i) => ({ time: i, price }))}>
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="price" 
-                                  stroke={coin.change >= 0 ? "#10b981" : "#ef4444"} 
-                                  strokeWidth={2}
-                                  dot={false}
-                                />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-8 text-center text-muted-foreground">
-                      No coins found matching your criteria.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </section>
-      </main>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger tabValue="all">All</TabsTrigger>
+            <TabsTrigger tabValue="favorites">Favorites</TabsTrigger>
+            <TabsTrigger tabValue="gainers">Gainers</TabsTrigger>
+            <TabsTrigger tabValue="losers">Losers</TabsTrigger>
+          </TabsList>
 
-      {/* Bottom Navigation */}
+          <TabsContent tabValue={activeTab}>
+            <View style={{ borderRadius: 8, borderWidth: 1, borderColor: '#eee', overflow: 'hidden' }}>
+              {/* Table header */}
+              <View style={{ flexDirection: 'row', padding: 12, backgroundColor: '#f6f6f6' }}>
+                <View style={{ flex: 5, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text onPress={() => handleSort("name")} style={{ fontWeight: 'bold' }}>Name {getSortIcon("name")}</Text>
+                </View>
+                <View style={{ flex: 3, alignItems: 'flex-end' }}>
+                  <Text onPress={() => handleSort("price")} style={{ fontWeight: 'bold' }}>Price {getSortIcon("price")}</Text>
+                </View>
+                <View style={{ flex: 4, alignItems: 'flex-end' }}>
+                  <Text onPress={() => handleSort("change")} style={{ fontWeight: 'bold' }}>24h Change {getSortIcon("change")}</Text>
+                </View>
+              </View>
+              {/* Data rows */}
+              {data.length > 0 ? (
+                data.map((coin) => (
+                  <View
+                    key={coin.id}
+                    style={{ flexDirection: 'row', padding: 16, alignItems: 'center', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' }}
+                  >
+                    <View style={{ flex: 5, flexDirection: 'row', alignItems: 'center' }}>
+                      <Button
+                        style={{ height: 32, width: 32, marginRight: 12, backgroundColor: 'transparent' }}
+                        onPress={() => toggleFavorite(coin.id)}
+                      >
+                        <FontAwesome name="star" size={16} color={coin.isFavorite ? "#facc15" : "#888"} solid={coin.isFavorite} />
+                      </Button>
+                      <Image
+                        source={{ uri: coin.iconUrl }}
+                        style={{ height: 32, width: 32, marginRight: 12, backgroundColor: '#fff', borderRadius: 16, padding: 2 }}
+                      />
+                      <View>
+                        <Text style={{ fontWeight: 'bold' }}>{coin.name}</Text>
+                        <Text style={{ fontSize: 12, color: '#888' }}>{coin.symbol}</Text>
+                      </View>
+                    </View>
+                    <View style={{ flex: 3, alignItems: 'flex-end' }}>
+                      <Text style={{ fontWeight: 'bold' }}>${coin.price.toLocaleString()}</Text>
+                    </View>
+                    <View style={{ flex: 2, alignItems: 'flex-end' }}>
+                      <Text style={{ color: coin.change >= 0 ? '#10b981' : '#ef4444' }}>
+                        {coin.change >= 0 ? '+' : ''}{coin.change}%
+                      </Text>
+                    </View>
+                    <View style={{ flex: 2 }}>
+                      <View style={{ height: 40 }}>
+                        <LineChart
+                          style={{ height: 40, width: 60 }}
+                          data={coin.priceHistory}
+                          svg={{ stroke: coin.change >= 0 ? "#10b981" : "#ef4444", strokeWidth: 2 }}
+                          contentInset={{ top: 8, bottom: 8 }}
+                          curve={shape.curveMonotoneX}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View style={{ padding: 32, alignItems: 'center' }}>
+                  <Text style={{ color: '#888' }}>No coins found matching your criteria.</Text>
+                </View>
+              )}
+            </View>
+          </TabsContent>
+        </Tabs>
+      </View>
       <BottomNavigation />
-    </div>
+    </View>
   );
 };
 

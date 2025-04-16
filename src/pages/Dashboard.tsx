@@ -1,318 +1,237 @@
-
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  Bell, 
-  Search, 
-  TrendingUp, 
-  TrendingDown, 
-  ArrowRight, 
-  PlusCircle, 
-  Wallet,
-  BarChart2 
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area
-} from "recharts";
-import { useAuth } from "@/contexts/AuthContext";
+import { useNavigation } from "@react-navigation/native";
+import { Feather } from '@expo/vector-icons';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, useColorScheme } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
+import Button from "@/components/ui/button";
 import BottomNavigation from "@/components/BottomNavigation";
-import WalletCard from "@/components/WalletCard";
-import { mockWallets, mockTransactions } from "@/lib/quidax";
-import TransactionItem from "@/components/TransactionItem";
 
-const mockChartData = [
-  { date: "Apr 08", btc: 54000, eth: 3200 },
-  { date: "Apr 09", btc: 56000, eth: 3100 },
-  { date: "Apr 10", btc: 57500, eth: 3300 },
-  { date: "Apr 11", btc: 55000, eth: 3400 },
-  { date: "Apr 12", btc: 58000, eth: 3600 },
-  { date: "Apr 13", btc: 59500, eth: 3800 },
-  { date: "Apr 14", btc: 61000, eth: 4000 },
+// ===== MOCK DATA FOR PRODUCTION UI =====
+const mockUser = { email: "john@doe.com" };
+const totalBalance = 500000;
+const monthlyVolume = 120000;
+const withdrawalLimit = 1000000;
+const recentTransactions = [
+  { id: '1', type: 'swap', amount: 0.00000576, currency: 'BTC', status: 'completed', createdAt: '2025-04-15', to_amount: 0.00000576, to_currency: 'BTC' },
+  { id: '2', type: 'trade', amount: 100, currency: 'USDT', status: 'completed', createdAt: '2025-04-14' },
 ];
 
-const marketData = [
-  { name: "Bitcoin", symbol: "BTC", price: 61245.32, change: 2.4, iconUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
-  { name: "Ethereum", symbol: "ETH", price: 3998.75, change: 4.2, iconUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { name: "Solana", symbol: "SOL", price: 132.56, change: -1.3, iconUrl: "https://cryptologos.cc/logos/solana-sol-logo.png" },
-  { name: "Cardano", symbol: "ADA", price: 0.45, change: 1.2, iconUrl: "https://cryptologos.cc/logos/cardano-ada-logo.png" },
+const quickActions = [
+  { label: 'Deposit', icon: 'download', color: ['#34d399', '#10b981'], onPress: () => {} },
+  { label: 'Instant Swap', icon: 'repeat', color: ['#818cf8', '#6366f1'], onPress: () => {} },
+  { label: 'Trade', icon: 'bar-chart-2', color: ['#c084fc', '#a21caf'], onPress: () => {} },
+  { label: 'Transaction History', icon: 'clock', color: ['#fbbf24', '#f59e42'], onPress: () => {} },
+  { label: 'Account Settings', icon: 'settings', color: ['#a1a1aa', '#64748b'], onPress: () => {} },
+];
+
+const quickLinks = [
+  { label: 'View Full Portfolio', icon: 'folder', subtitle: 'Check your assets' },
+  { label: 'Trade Crypto', icon: 'shopping-cart', subtitle: 'Buy & sell crypto' },
+  { label: 'P2P Trading', icon: 'users', subtitle: 'Trade with users' },
 ];
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-  const totalBalance = mockWallets.reduce((sum, wallet) => sum + wallet.fiatValue, 0);
+  const navigation = useNavigation();
+  const systemColorScheme = useColorScheme();
+  // Demo theme toggle: local state (replace with context/provider for app-wide theme)
+  const [theme, setTheme] = useState<'light' | 'dark'>(systemColorScheme === 'dark' ? 'dark' : 'light');
+  const isDark = theme === 'dark';
+  const firstName = mockUser.email.split('@')[0] || "User";
 
-  const firstName = user?.email?.split('@')[0] || "User";
+  // Card background helpers
+  const cardBg = (colors: string[]) => isDark ? colors.map(c => darken(c)) : colors;
+  function darken(hex: string) {
+    // Simple darken for demo
+    return hex.replace('#', '#1a');
+  }
+
+  // Theme toggle handler
+  const handleThemeToggle = () => setTheme(isDark ? 'light' : 'dark');
 
   return (
-    <div className="min-h-screen bg-background">
+    <View style={[styles.container, { backgroundColor: isDark ? '#101112' : '#f8fafc' }]}>
       {/* Header */}
-      <header className="ios-header">
-        <div className="flex items-center">
-          <h1 className="text-lg font-semibold">Dashboard</h1>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate("/notifications")}
-          >
-            <Bell className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
+      <View style={[styles.header, { backgroundColor: isDark ? '#16181b' : '#fff', borderBottomColor: isDark ? '#222' : '#eee' }]}>
+        {/* Menu Button */}
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.openDrawer?.() || {}}>
+          <Feather name="menu" size={22} color={isDark ? '#fff' : '#1a237e'} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : '#1a237e', flex: 1, textAlign: 'center' }]}>Dashboard</Text>
+        {/* Theme Toggle Button */}
+        <TouchableOpacity style={styles.iconBtn} onPress={handleThemeToggle}>
+          {isDark ? (
+            <Feather name="sun" size={20} color="#fbbf24" />
+          ) : (
+            <Feather name="moon" size={20} color="#6366f1" />
+          )}
+        </TouchableOpacity>
+        {/* Notification Button */}
+        <Button
+          variant="outline"
+          style={styles.iconBtn}
+          onPress={() => navigation.navigate('Notifications' as never)}
+        >
+          <Feather name="bell" size={20} color={isDark ? '#fff' : '#1a237e'} />
+        </Button>
+      </View>
 
-      {/* Main Content */}
-      <main className="screen-container animate-fade-in">
-        <section className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Welcome, {firstName}</h1>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input 
-              className="pl-10" 
-              placeholder="Search assets, transactions..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </section>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Welcome & Info */}
+        <View style={styles.section}>
+          <Text style={[styles.welcome, { color: isDark ? '#fff' : '#1a237e' }]}>Welcome back! {firstName}👋</Text>
+          <Text style={[styles.subtitle, { color: isDark ? '#cbd5e1' : '#64748b' }]}>Here's an overview of your account and quick actions.</Text>
+        </View>
 
-        {/* Portfolio Overview */}
-        <section className="mb-6">
-          <Card className="p-6 rounded-xl bg-card">
-            <div className="mb-2">
-              <p className="text-muted-foreground">Total Balance</p>
-            </div>
-            <h2 className="text-3xl font-bold">${totalBalance.toLocaleString()}</h2>
-            <div className="flex items-center mt-1 text-sm text-green-500">
-              <TrendingUp className="h-4 w-4 mr-1" />
-              <span>+5.12% today</span>
-            </div>
+        {/* Overview Cards */}
+        <View style={styles.overviewRow}>
+          <LinearGradient colors={['#a7f3d0', '#34d399']} style={styles.overviewCard}>
+            <Text style={styles.overviewLabel}>Total Balance</Text>
+            <Text style={styles.overviewValue}>₦{totalBalance.toLocaleString()}</Text>
+            <Text style={styles.overviewSub}>Total value across all wallets</Text>
+            <TouchableOpacity style={styles.overviewAction}><Text style={styles.overviewActionText}>View Details <Feather name="chevron-right" size={13} /></Text></TouchableOpacity>
+          </LinearGradient>
+          <LinearGradient colors={['#dbeafe', '#818cf8']} style={styles.overviewCard}>
+            <Text style={styles.overviewLabel}>Monthly Volume</Text>
+            <Text style={styles.overviewValue}>₦{monthlyVolume.toLocaleString()}</Text>
+            <Text style={styles.overviewSub}>Your trading volume this month</Text>
+          </LinearGradient>
+          <LinearGradient colors={['#fef9c3', '#fbbf24']} style={styles.overviewCard}>
+            <Text style={styles.overviewLabel}>Withdrawal Limit</Text>
+            <Text style={styles.overviewValue}>₦{withdrawalLimit.toLocaleString()}</Text>
+            <Text style={styles.overviewSub}>Your remaining withdrawal limit</Text>
+          </LinearGradient>
+        </View>
 
-            <div className="mt-6 h-36">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mockChartData}>
-                  <defs>
-                    <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                  <YAxis hide />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="btc" stroke="#10b981" fillOpacity={1} fill="url(#colorBalance)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+        {/* Promo/Info Banners */}
+        <View style={styles.bannerRow}>
+          <LinearGradient colors={['#f3e8ff', '#c084fc']} style={styles.bannerCard}>
+            <Feather name="gift" size={20} color="#a21caf" style={{ marginRight: 10 }} />
+            <View>
+              <Text style={styles.bannerTitle}>Earn 50 USDT Welcome Bonus!</Text>
+              <Text style={styles.bannerDesc}>Complete your first trade for bonus <Text style={styles.bannerLink}>Trade <Feather name="arrow-right" size={12} /></Text></Text>
+            </View>
+          </LinearGradient>
+          <LinearGradient colors={['#d1fae5', '#38bdf8']} style={styles.bannerCard}>
+            <Feather name="users" size={20} color="#0ea5e9" style={{ marginRight: 10 }} />
+            <View>
+              <Text style={styles.bannerTitle}>Try P2P Trading!</Text>
+              <Text style={styles.bannerDesc}>Trade directly with other users <Text style={styles.bannerLink}>P2P <Feather name="arrow-right" size={12} /></Text></Text>
+            </View>
+          </LinearGradient>
+        </View>
 
-            <div className="flex gap-2 mt-4">
-              <Button 
-                className="flex-1 bg-brand-600 hover:bg-brand-700"
-                onClick={() => navigate("/deposit")}
-              >
-                <PlusCircle className="h-4 w-4 mr-1" />
-                Deposit
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => navigate("/transfer")}
-              >
-                <Wallet className="h-4 w-4 mr-1" />
-                Transfer
-              </Button>
-            </div>
-          </Card>
-        </section>
-
-        {/* Quick Access */}
-        <section className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Quick Actions</h2>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            <Button 
-              variant="outline" 
-              className="flex flex-col items-center justify-center h-24 text-xs"
-              onClick={() => navigate("/deposit")}
-            >
-              <PlusCircle className="h-8 w-8 mb-2" />
-              Deposit
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex flex-col items-center justify-center h-24 text-xs"
-              onClick={() => navigate("/transfer")}
-            >
-              <Wallet className="h-8 w-8 mb-2" />
-              Transfer
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex flex-col items-center justify-center h-24 text-xs"
-              onClick={() => navigate("/trade")}
-            >
-              <BarChart2 className="h-8 w-8 mb-2" />
-              Trade
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex flex-col items-center justify-center h-24 text-xs"
-              onClick={() => navigate("/calculator")}
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                className="h-8 w-8 mb-2"
-              >
-                <rect x="4" y="2" width="16" height="20" rx="2" />
-                <line x1="8" x2="16" y1="6" y2="6" />
-                <line x1="16" x2="16" y1="14" y2="18" />
-                <path d="M16 10h.01" />
-                <path d="M12 10h.01" />
-                <path d="M8 10h.01" />
-                <path d="M12 14h.01" />
-                <path d="M8 14h.01" />
-                <path d="M12 18h.01" />
-                <path d="M8 18h.01" />
-              </svg>
-              Calculator
-            </Button>
-          </div>
-        </section>
-
-        {/* My Assets */}
-        <section className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">My Assets</h2>
-            <Button 
-              variant="link" 
-              className="text-sm flex items-center"
-              onClick={() => navigate("/wallet")}
-            >
-              View all
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-          <div className="space-y-4">
-            {mockWallets.slice(0, 2).map((wallet) => (
-              <WalletCard
-                key={wallet.id}
-                name={wallet.name}
-                symbol={wallet.symbol}
-                balance={wallet.balance}
-                fiatValue={wallet.fiatValue}
-                iconUrl={wallet.iconUrl}
-                className="cursor-pointer"
-                onClick={() => navigate(`/wallet/${wallet.id}`)}
-              />
+        {/* Quick Actions */}
+        <View style={styles.quickActionsBox}>
+          <Text style={[styles.quickActionsTitle, { color: isDark ? '#fff' : '#1a237e' }]}>Quick Actions</Text>
+          <View style={styles.quickActionsRow}>
+            {quickActions.map((action, idx) => (
+              <TouchableOpacity key={action.label} style={[styles.quickAction, { backgroundColor: isDark ? '#18181b' : '#fff' }]} onPress={action.onPress}>
+                <LinearGradient colors={['#a7f3d0', '#34d399']} style={styles.quickActionIconBox}>
+                  <Feather name={action.icon as any} size={22} color="#fff" />
+                </LinearGradient>
+                <Text style={[styles.quickActionLabel, { color: isDark ? '#fff' : '#1a237e' }]}>{action.label}</Text>
+              </TouchableOpacity>
             ))}
-          </div>
-        </section>
+          </View>
+        </View>
 
-        {/* Market Overview */}
-        <section className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Market Overview</h2>
-            <Button 
-              variant="link" 
-              className="text-sm flex items-center"
-              onClick={() => navigate("/market")}
-            >
-              View all
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-          <Card className="bg-card overflow-hidden">
-            <div className="divide-y divide-border">
-              {marketData.map((coin, index) => (
-                <div 
-                  key={coin.symbol} 
-                  className="flex items-center justify-between p-4 cursor-pointer"
-                  onClick={() => navigate(`/market/${coin.symbol}`)}
-                >
-                  <div className="flex items-center">
-                    <img 
-                      src={coin.iconUrl} 
-                      alt={coin.name} 
-                      className="h-8 w-8 mr-3 bg-white p-1 rounded-full" 
-                    />
-                    <div>
-                      <h3 className="font-medium">{coin.name}</h3>
-                      <p className="text-sm text-muted-foreground">{coin.symbol}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">${coin.price}</p>
-                    <p className={`text-sm ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'} flex items-center justify-end`}>
-                      {coin.change >= 0 ? (
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                      )}
-                      {coin.change >= 0 ? '+' : ''}{coin.change}%
-                    </p>
-                  </div>
-                </div>
+        {/* Quick Links & Recent Transactions */}
+        <View style={styles.linksRow}>
+          <View style={styles.linksCol}>
+            <Text style={[styles.quickLinksTitle, { color: isDark ? '#fff' : '#1a237e' }]}>Quick Links</Text>
+            {quickLinks.map(link => (
+              <TouchableOpacity key={link.label} style={[styles.quickLink, { borderColor: isDark ? '#444' : '#d1d5db', backgroundColor: isDark ? '#18181b' : '#fff' }]}>
+                <Feather name={link.icon as any} size={18} color={isDark ? '#818cf8' : '#6366f1'} style={{ marginRight: 10 }} />
+                <View>
+                  <Text style={[styles.quickLinkLabel, { color: isDark ? '#fff' : '#1a237e' }]}>{link.label}</Text>
+                  <Text style={[styles.quickLinkSub, { color: isDark ? '#cbd5e1' : '#64748b' }]}>{link.subtitle}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.transactionsCol}>
+            <View style={styles.transactionsHeader}>
+              <Text style={[styles.transactionsTitle, { color: isDark ? '#fff' : '#1a237e' }]}>Recent Transactions</Text>
+              <TouchableOpacity><Text style={styles.transactionsViewAll}>View All <Feather name="chevron-right" size={13} /></Text></TouchableOpacity>
+            </View>
+            <View style={[styles.transactionsList, { backgroundColor: isDark ? '#18181b' : '#fff' }]}>
+              {recentTransactions.map(tx => (
+                <View key={tx.id} style={styles.transactionItem}>
+                  <Feather name={tx.type === 'swap' ? 'repeat' : 'bar-chart-2'} size={18} color={tx.type === 'swap' ? '#6366f1' : '#a21caf'} style={{ marginRight: 10 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.transactionLabel, { color: isDark ? '#fff' : '#1a237e' }]}>{tx.type === 'swap' ? 'Swap' : 'Trade'}</Text>
+                    <Text style={styles.transactionDate}>{tx.createdAt}</Text>
+                  </View>
+                  <Text style={[styles.transactionAmount, { color: tx.type === 'swap' ? '#6366f1' : '#a21caf' }]}>+{tx.amount} {tx.currency}</Text>
+                </View>
               ))}
-            </div>
-          </Card>
-        </section>
+            </View>
+          </View>
+        </View>
 
-        {/* Recent Transactions */}
-        <section className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Recent Transactions</h2>
-            <Button 
-              variant="link" 
-              className="text-sm flex items-center"
-              onClick={() => navigate("/transactions")}
-            >
-              View all
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-          <Card className="bg-card rounded-xl border border-border overflow-hidden">
-            {mockTransactions.slice(0, 3).map((tx) => (
-              <TransactionItem
-                key={tx.id}
-                id={tx.id}
-                type={tx.type as "deposit" | "withdrawal"}
-                amount={tx.amount}
-                currency={tx.currency}
-                status={tx.status as "pending" | "completed" | "failed"}
-                createdAt={tx.createdAt}
-                fee={tx.fee}
-              />
-            ))}
-          </Card>
-        </section>
-      </main>
-
-      {/* Bottom Navigation */}
+        {/* Spacer for bottom nav */}
+        <View style={{ height: 90 }} />
+      </ScrollView>
       <BottomNavigation />
-    </div>
+    </View>
   );
 };
+
+// ===== STYLES =====
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+  },
+  headerTitle: { fontSize: 20, fontWeight: '600' },
+  iconBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+  scrollContent: { paddingBottom: 80 },
+  section: { paddingHorizontal: 20, marginBottom: 18 },
+  welcome: { fontSize: 17, fontWeight: '700', marginBottom: 2 },
+  subtitle: { fontSize: 14, marginBottom: 8 },
+  // Overview Cards
+  overviewRow: { flexDirection: 'row', gap: 14, marginBottom: 14, paddingHorizontal: 10 },
+  overviewCard: { flex: 1, borderRadius: 18, padding: 18, marginHorizontal: 2, minWidth: 120, elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 } },
+  overviewLabel: { fontSize: 13, color: '#64748b', fontWeight: '600' },
+  overviewValue: { fontSize: 20, fontWeight: 'bold', marginVertical: 2, color: '#1a237e' },
+  overviewSub: { fontSize: 12, color: '#64748b', marginBottom: 6 },
+  overviewAction: { alignSelf: 'flex-end', marginTop: 2 },
+  overviewActionText: { fontSize: 12, color: '#10b981', fontWeight: '600' },
+  // Banners
+  bannerRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 10, marginBottom: 12 },
+  bannerCard: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 14, padding: 14, marginHorizontal: 2, elevation: 1 },
+  bannerTitle: { fontWeight: '600', fontSize: 14, color: '#1a237e' },
+  bannerDesc: { fontSize: 12, color: '#64748b' },
+  bannerLink: { color: '#6366f1', fontWeight: '600' },
+  // Quick Actions
+  quickActionsBox: { marginBottom: 18, paddingHorizontal: 10 },
+  quickActionsTitle: { fontSize: 15, fontWeight: '700', marginBottom: 10 },
+  quickActionsRow: { flexDirection: 'row', gap: 10 },
+  quickAction: { flex: 1, alignItems: 'center', borderRadius: 14, padding: 12, marginHorizontal: 2, elevation: 1 },
+  quickActionIconBox: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  quickActionLabel: { fontSize: 12, fontWeight: '600' },
+  // Links & Transactions
+  linksRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 10 },
+  linksCol: { flex: 1 },
+  transactionsCol: { flex: 1 },
+  quickLinksTitle: { fontSize: 15, fontWeight: '700', marginBottom: 10 },
+  quickLink: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 12, padding: 10, marginBottom: 10 },
+  quickLinkLabel: { fontWeight: '600', fontSize: 13 },
+  quickLinkSub: { fontSize: 11 },
+  transactionsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  transactionsTitle: { fontSize: 15, fontWeight: '700' },
+  transactionsViewAll: { fontSize: 12, color: '#6366f1', fontWeight: '600' },
+  transactionsList: { borderRadius: 12, padding: 10, gap: 10, elevation: 1 },
+  transactionItem: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 6 },
+  transactionLabel: { fontWeight: '600', fontSize: 13 },
+  transactionDate: { fontSize: 11, color: '#64748b' },
+  transactionAmount: { fontWeight: 'bold', fontSize: 13 },
+});
 
 export default Dashboard;

@@ -3,7 +3,28 @@ import { env } from "@/config/env";
 
 interface QuidaxConfig {
   apiKey: string;
+  secretKey: string;
   apiUrl: string;
+  webhookSecret: string;
+}
+
+interface SwapQuotation {
+  from_currency: string;
+  to_currency: string;
+  from_amount: string;
+}
+
+interface MarketTicker {
+  market: string;
+  at: number;
+  ticker: {
+    buy: string;
+    sell: string;
+    low: string;
+    high: string;
+    last: string;
+    vol: string;
+  };
 }
 
 class QuidaxClient {
@@ -20,9 +41,118 @@ class QuidaxClient {
     };
   }
 
-  async getWallets(userId: string) {
+  async getParentAccount() {
     try {
-      const response = await fetch(`${this.config.apiUrl}/users/${userId}/wallets`, {
+      const response = await fetch(`${this.config.apiUrl}/users/me`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching parent account: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Get parent account error:", error);
+      throw error;
+    }
+  }
+
+  async createSwapQuotation(params: SwapQuotation) {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/users/me/swap_quotation`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(params),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error creating swap quotation: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Create swap quotation error:", error);
+      throw error;
+    }
+  }
+
+  async confirmSwapQuotation(quotationId: string) {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/users/me/swap_quotation/${quotationId}/confirm`, {
+        method: "POST",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error confirming swap quotation: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Confirm swap quotation error:", error);
+      throw error;
+    }
+  }
+
+  async getSwapTransactions() {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/users/me/swap_transactions`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching swap transactions: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Get swap transactions error:", error);
+      throw error;
+    }
+  }
+
+  async getMarketTickers() {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/markets/tickers`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching market tickers: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Get market tickers error:", error);
+      throw error;
+    }
+  }
+
+  async getMarketTicker(market: string): Promise<MarketTicker> {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/markets/tickers/${market}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching market ticker: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Get market ticker error:", error);
+      throw error;
+    }
+  }
+
+  async getWallets() {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/users/me/wallets`, {
         method: "GET",
         headers: this.getHeaders(),
       });
@@ -122,11 +252,108 @@ class QuidaxClient {
       throw error;
     }
   }
+
+  async getMarkets() {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/markets`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching markets: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Get markets error:", error);
+      throw error;
+    }
+  }
+
+  // Remove the duplicate getMarketTicker implementation here
+  
+  async createOrder(market: string, side: 'buy' | 'sell', orderType: 'limit' | 'market', amount: string, price?: string) {
+    try {
+      const payload: any = {
+        market,
+        side,
+        ord_type: orderType,
+        amount,
+      };
+
+      if (price && orderType === 'limit') {
+        payload.price = price;
+      }
+
+      const response = await fetch(`${this.config.apiUrl}/orders`, {
+        method: "POST",
+        headers: {
+          ...this.getHeaders(),
+          "Authorization": `Bearer ${this.config.secretKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error creating order: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Create order error:", error);
+      throw error;
+    }
+  }
+
+  async getOrders(market: string, state: 'pending' | 'done' | 'cancel' = 'pending') {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/orders?market=${market}&state=${state}`, {
+        method: "GET",
+        headers: {
+          ...this.getHeaders(),
+          "Authorization": `Bearer ${this.config.secretKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching orders: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Get orders error:", error);
+      throw error;
+    }
+  }
+
+  async cancelOrder(id: string) {
+    try {
+      const response = await fetch(`${this.config.apiUrl}/orders/${id}/cancel`, {
+        method: "POST",
+        headers: {
+          ...this.getHeaders(),
+          "Authorization": `Bearer ${this.config.secretKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error canceling order: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Cancel order error:", error);
+      throw error;
+    }
+  }
 }
 
 export const quidax = new QuidaxClient({
   apiKey: env.QUIDAX_PUBLIC_KEY,
+  secretKey: env.QUIDAX_SECRET_KEY,
   apiUrl: env.QUIDAX_API_URL,
+  webhookSecret: env.QUIDAX_WEBHOOK_SECRET,
 });
 
 // Mock data for development

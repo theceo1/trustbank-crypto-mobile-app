@@ -1,17 +1,18 @@
 
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
+import Checkbox from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Key, User, Fingerprint } from "lucide-react";
+import { MaterialCommunityIcons, Feather, FontAwesome } from '@expo/vector-icons';
 import Logo from "@/components/Logo";
 import BiometricPrompt from "@/components/BiometricPrompt";
 import { signInWithGoogle } from "@/lib/supabase";
-import { Separator } from "@/components/ui/separator";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -23,11 +24,10 @@ const Login = () => {
   const [showBiometric, setShowBiometric] = useState(false);
   
   const { signIn } = useAuth();
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setLoading(true);
 
     try {
@@ -43,7 +43,7 @@ const Login = () => {
           title: "Login Successful",
           description: "Welcome back to trustBank!",
         });
-        navigate("/");
+        navigation.navigate("Home" as never);
       }
     } catch (error) {
       toast({
@@ -90,7 +90,7 @@ const Login = () => {
       title: "Biometric Authentication Successful",
       description: "Welcome back to trustBank!",
     });
-    navigate("/");
+    navigation.navigate("Home" as never);
   };
 
   const handleBiometricFailure = () => {
@@ -103,156 +103,310 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md space-y-8 animate-fade-in">
-        <div className="text-center">
-          <Logo size="lg" className="mx-auto mb-6" />
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-          <p className="text-muted-foreground mt-2">
-            Sign in to access your trustBank account
-          </p>
-        </div>
+    <LinearGradient
+      colors={["#10b981", "#1a237e"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.bg}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.card}>
+            <View style={styles.logo}><Logo size="lg" /></View>
+            <Text style={styles.title}>Welcome back</Text>
+            <Text style={styles.subtitle}>Sign in to access your trustBank account</Text>
 
-        <form className="space-y-6" onSubmit={handleLogin}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            {/* Email */}
+            <View style={styles.inputGroup}>
+              <Label>Email</Label>
+              <View style={styles.inputIconRow}>
+                <FontAwesome name="user" size={18} color="#bdbdbd" style={styles.inputIcon} />
                 <Input
-                  id="email"
                   placeholder="you@example.com"
-                  type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
+                  onChangeText={setEmail}
+                  style={styles.input}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  importantForAutofill="yes"
+                  autoComplete="email"
+                  returnKeyType="next"
                 />
-              </div>
-            </div>
+              </View>
+            </View>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Label>Password</Label>
+              <View style={styles.inputIconRow}>
+                <Feather name="key" size={18} color="#bdbdbd" style={styles.inputIcon} />
                 <Input
-                  id="password"
                   placeholder="••••••••"
-                  type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  required
+                  onChangeText={setPassword}
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  importantForAutofill="yes"
+                  autoComplete="password"
+                  returnKeyType="done"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3"
+                <TouchableOpacity
+                  style={styles.inputIconRight}
+                  onPress={() => setShowPassword((v) => !v)}
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+                  <Feather name={showPassword ? "eye-off" : "eye"} size={18} color="#bdbdbd" />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember"
-                checked={rememberMe}
-                onCheckedChange={(checked) => 
-                  setRememberMe(checked === true)
-                }
-              />
-              <Label htmlFor="remember" className="text-sm cursor-pointer">
-                Remember me
-              </Label>
-            </div>
-            <Link
-              to="/forgot-password"
-              className="text-sm text-brand-600 hover:text-brand-500"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-brand-600 hover:bg-brand-700"
-            disabled={loading}
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleGoogleLogin}
-              disabled={googleLoading}
-            >
-              <svg
-                className="mr-2 h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 488 512"
-              >
-                <path
-                  d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                  fill="currentColor"
+            {/* Remember Me & Forgot Password */}
+            <View style={styles.rowBetween}>
+              <View style={styles.rowCenter}>
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={setRememberMe}
+                  style={styles.checkbox}
                 />
-              </svg>
-              {googleLoading ? "Connecting..." : "Sign in with Google"}
-            </Button>
+                <Text style={styles.rememberText}>Remember me</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword" as never)}
+                style={styles.forgotBtn}
+                accessibilityLabel="Forgot password?"
+              >
+                <Text style={styles.link}>Forgot password?</Text>
+              </TouchableOpacity>
+            </View>
 
+            {/* Login Button */}
             <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleBiometricAuth}
+              style={styles.loginBtn}
+              onPress={handleLogin}
+              disabled={loading}
             >
-              <Fingerprint className="mr-2 h-4 w-4" />
-              Sign in with Face ID / Touch ID
+              {loading ? <ActivityIndicator color="#fff" /> : "Sign in"}
             </Button>
-          </div>
-        </form>
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link
-              to="/signup"
-              className="font-medium text-brand-600 hover:text-brand-500"
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>Or continue with</Text>
+              <View style={styles.divider} />
+            </View>
+
+            {/* Google Login */}
+            <TouchableOpacity
+              style={styles.googleBtn}
+              onPress={handleGoogleLogin}
+              disabled={googleLoading}
+              activeOpacity={0.8}
             >
-              Sign up
-            </Link>
-          </p>
-        </div>
+              <FontAwesome name="google" size={18} color="#ea4335" style={{ marginRight: 8 }} />
+              <Text style={styles.googleBtnText}>{googleLoading ? "Connecting..." : "Sign in with Google"}</Text>
+            </TouchableOpacity>
 
-        <BiometricPrompt
-          isOpen={showBiometric}
-          onClose={() => setShowBiometric(false)}
-          onSuccess={handleBiometricSuccess}
-          onFailure={handleBiometricFailure}
-        />
-      </div>
-    </div>
-  );
+            {/* Biometric Login */}
+            <TouchableOpacity
+              style={styles.biometricBtn}
+              onPress={handleBiometricAuth}
+              activeOpacity={0.8}
+              accessibilityLabel="Sign in with Face ID or Touch ID"
+            >
+              <MaterialCommunityIcons name="fingerprint" size={22} color="#10b981" style={{ marginRight: 8 }} />
+              <Text style={styles.biometricBtnText}>Sign in with Face ID / Touch ID</Text>
+            </TouchableOpacity>
+
+            {/* Signup Link */}
+            <View style={styles.loginRow}>
+              <Text style={styles.loginText}>
+                Don't have an account?{' '}
+                <Text style={styles.link} onPress={() => navigation.navigate("Signup" as never)}>Sign up</Text>
+              </Text>
+            </View>
+
+          {/* Signup Link (already rendered below, removed duplicate) */}
+        </View>
+      </ScrollView>
+      <BiometricPrompt
+        isOpen={showBiometric}
+        onClose={() => setShowBiometric(false)}
+        onSuccess={handleBiometricSuccess}
+        onFailure={handleBiometricFailure}
+      />
+    </KeyboardAvoidingView>
+  </LinearGradient>
+);
 };
+
+const styles = StyleSheet.create({
+  bg: {
+    flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    paddingVertical: 32,
+    paddingHorizontal: 22,
+    shadowColor: '#10b981',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 32,
+    elevation: 8,
+    alignItems: 'center',
+  },
+  logo: {
+    marginBottom: 18,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#10b981',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#5c5e6b',
+    marginBottom: 18,
+    textAlign: 'center',
+  },
+  inputGroup: {
+    width: '100%',
+    marginBottom: 14,
+  },
+  inputIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f6f8fa',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#e0e7ef',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 6,
+  },
+  inputIcon: {
+    marginRight: 6,
+  },
+  inputIconRight: {
+    marginLeft: 'auto',
+    padding: 4,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#222',
+    paddingVertical: 10,
+    backgroundColor: 'transparent',
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 10,
+  },
+  rowCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    marginRight: 10,
+    borderColor: '#10b981',
+  },
+  rememberText: {
+    fontSize: 14,
+    color: '#5c5e6b',
+  },
+  forgotBtn: {
+    padding: 0,
+  },
+  loginBtn: {
+    width: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+    width: '100%',
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e7ef',
+  },
+  dividerText: {
+    fontSize: 12,
+    color: '#a1a1aa',
+    marginHorizontal: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 13,
+    width: '100%',
+    backgroundColor: '#f6f8fa',
+    marginBottom: 10,
+  },
+  googleBtnText: {
+    color: '#10b981',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  biometricBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 13,
+    width: '100%',
+    backgroundColor: '#e8fdf3',
+    marginBottom: 8,
+  },
+  biometricBtnText: {
+    color: '#10b981',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  loginRow: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  loginText: {
+    fontSize: 14,
+    color: '#5c5e6b',
+  },
+  link: {
+    color: '#10b981',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+});
 
 export default Login;

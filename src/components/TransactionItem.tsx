@@ -1,8 +1,8 @@
 
 import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface TransactionItemProps {
   id: string;
@@ -27,49 +27,97 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
   const timeAgo = formatDistanceToNow(date, { addSuffix: true });
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "p-2 rounded-full",
-            isDeposit
-              ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-          )}
-        >
-          {isDeposit ? (
-            <ArrowDownLeft className="h-5 w-5" />
-          ) : (
-            <ArrowUpRight className="h-5 w-5" />
-          )}
-        </div>
-        <div>
-          <div className="font-medium">
+    <View style={styles.container}>
+      <View style={styles.leftSection}>
+        <View style={[styles.iconCircle, isDeposit ? styles.depositBg : styles.withdrawalBg]}>
+          <Feather
+            name={isDeposit ? "arrow-down-left" : "arrow-up-right"}
+            size={20}
+            color={isDeposit ? "#059669" : "#dc2626"}
+          />
+        </View>
+        <View>
+          <Text style={styles.titleText}>
             {isDeposit ? "Received" : "Sent"} {currency}
-          </div>
-          <div className="text-xs text-muted-foreground">{timeAgo}</div>
-        </div>
-      </div>
-      <div className="text-right">
-        <div className="font-medium">
+          </Text>
+          <Text style={styles.timeAgo}>{timeAgo}</Text>
+        </View>
+      </View>
+      <View style={styles.rightSection}>
+        <Text style={styles.amountText}>
           {isDeposit ? "+" : "-"}
           {parseFloat(amount).toFixed(8)} {currency}
-        </div>
-        <div
-          className={cn(
-            "text-xs",
+        </Text>
+        <Text style={
+          [styles.statusText,
             status === "completed"
-              ? "text-brand-600"
+              ? styles.statusCompleted
               : status === "pending"
-              ? "text-amber-600"
-              : "text-red-600"
-          )}
-        >
+              ? styles.statusPending
+              : styles.statusFailed
+          ]
+        }>
           {status.charAt(0).toUpperCase() + status.slice(1)}
-        </div>
-      </div>
-    </div>
+        </Text>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  leftSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  iconCircle: {
+    padding: 8,
+    borderRadius: 999,
+    marginRight: 8,
+  },
+  depositBg: {
+    backgroundColor: "#bbf7d0",
+  },
+  withdrawalBg: {
+    backgroundColor: "#fecaca",
+  },
+  titleText: {
+    fontWeight: "500",
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  timeAgo: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+  rightSection: {
+    alignItems: "flex-end",
+  },
+  amountText: {
+    fontWeight: "500",
+    fontSize: 16,
+  },
+  statusText: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  statusCompleted: {
+    color: "#10b981",
+  },
+  statusPending: {
+    color: "#f59e42",
+  },
+  statusFailed: {
+    color: "#dc2626",
+  },
+});
 
 export default TransactionItem;

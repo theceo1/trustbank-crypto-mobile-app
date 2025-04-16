@@ -1,22 +1,22 @@
 
 import { useTheme } from "@/contexts/ThemeContext";
-import { Button } from "@/components/ui/button";
-import { Moon, Sun } from "lucide-react";
+import Button from "@/components/ui/button";
+import { Feather } from "@expo/vector-icons";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
     <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      aria-label="Toggle theme"
+      variant="outline"
+      style={{ width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginHorizontal: 4 }}
+      onPress={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      accessibilityLabel="Toggle theme" 
     >
       {resolvedTheme === "dark" ? (
-        <Sun className="h-5 w-5 text-yellow-400" />
+        <Feather name="sun" size={20} color="#FFD700" />
       ) : (
-        <Moon className="h-5 w-5 text-slate-700" />
+        <Feather name="moon" size={20} color="#334155" />
       )}
     </Button>
   );
