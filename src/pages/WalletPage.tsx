@@ -1,11 +1,12 @@
-import React from "react";
-import { View, Text, ScrollView, SafeAreaView, StyleSheet, TouchableOpacity } from "react-native";
+//src/pages/WalletPage.tsx
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
+import { useTheme } from '@/contexts/ThemeContext';
 import { Feather } from "@expo/vector-icons";
-import Button from "@/components/ui/button";
-import BottomNavigation from "@/components/BottomNavigation";
 import { useNavigation } from "@react-navigation/native";
+import Button from "@/components/ui/button";
 
 const WalletPage = () => {
+  const { theme } = useTheme();
   const navigation = useNavigation();
   // Mock data
   const wallets = [
@@ -23,46 +24,32 @@ const WalletPage = () => {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton} accessibilityLabel="Back">
-          <Feather name="chevron-left" size={22} color="#1a237e" />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Wallet</Text>
-          <Text style={styles.headerSubtitle}>Manage your crypto assets and transactions</Text>
-        </View>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate("Profile" as never)} accessibilityLabel="Profile">
-          <Feather name="user" size={22} color="#1a237e" />
-        </TouchableOpacity>
-      </View>
-
+    <View style={{ flex: 1 }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 90 }}>
         {/* Action Buttons */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]}
             onPress={() => navigation.navigate("Deposit" as never)}>
-            <Feather name="download" size={22} color="#fff" />
+            <Feather name="download" size={22} color={theme.colors.background} />
             <Text style={styles.actionLabel}>Deposit</Text>
             <Text style={styles.actionSub}>Add funds to your wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#a21caf' }]}
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]}
             onPress={() => navigation.navigate("Withdraw" as never)}>
-            <Feather name="upload" size={22} color="#fff" />
+            <Feather name="upload" size={22} color={theme.colors.background} />
             <Text style={styles.actionLabel}>Withdraw</Text>
             <Text style={styles.actionSub}>Send funds to external wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#f59e42' }]}
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.colors.secondaryText }]}
             onPress={() => navigation.navigate("Swap" as never)}>
-            <Feather name="repeat" size={22} color="#fff" />
+            <Feather name="repeat" size={22} color={theme.colors.background} />
             <Text style={styles.actionLabel}>Instant Swap</Text>
             <Text style={styles.actionSub}>Exchange between currencies</Text>
           </TouchableOpacity>
         </View>
 
         {/* Portfolio Value Card */}
-        <View style={styles.portfolioCard}>
+        <View style={[styles.portfolioCard, { backgroundColor: theme.colors.background }]}>
           <Text style={styles.portfolioLabel}>Total Portfolio Value</Text>
           <Text style={styles.portfolioValue}>₦{totalPortfolioValue}</Text>
           <Text style={styles.portfolioSub}>Your total balance across all wallets</Text>
@@ -76,7 +63,7 @@ const WalletPage = () => {
             <Text style={styles.addWalletText}>Add New</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.searchBox}>
+        <View style={[styles.searchBox, { backgroundColor: theme.colors.card }]}>
           <Feather name="search" size={16} color="#888" style={{ marginRight: 6 }} />
           <Text style={styles.searchPlaceholder}>Search wallets...</Text>
         </View>
@@ -84,7 +71,7 @@ const WalletPage = () => {
         {/* Wallet List */}
         <View style={styles.walletsList}>
           {wallets.map(wallet => (
-            <View key={wallet.id} style={styles.walletCard}>
+            <View key={wallet.id} style={[styles.walletCard, { backgroundColor: theme.colors.background }]}>
               <View style={styles.walletCardRow}>
                 <Text style={styles.walletCurrency}>{wallet.currency}</Text>
                 <Text style={styles.walletBalance}>{wallet.currency === 'BTC' ? wallet.balance : `₦${wallet.balance}`}</Text>
@@ -100,14 +87,14 @@ const WalletPage = () => {
         </View>
 
         {/* Asset Distribution Placeholder */}
-        <View style={styles.assetDistributionCard}>
+        <View style={[styles.assetDistributionCard, { backgroundColor: theme.colors.background }]}>
           <Text style={styles.assetDistributionTitle}>Asset Distribution</Text>
-          <View style={styles.assetDistributionChartPlaceholder} />
+          <View style={[styles.assetDistributionChartPlaceholder, { backgroundColor: theme.colors.card }]} />
           <Text style={styles.assetDistributionLegend}>BTC (40.3%)   USDT (33.8%)   SOL (25.8%)</Text>
         </View>
 
         {/* Transaction History */}
-        <View style={styles.transactionsCard}>
+        <View style={[styles.transactionsCard, { backgroundColor: theme.colors.background }]}>
           <Text style={styles.transactionsTitle}>Recent Transactions</Text>
           {transactions.map(tx => (
             <View key={tx.id} style={styles.transactionItem}>
@@ -121,14 +108,13 @@ const WalletPage = () => {
           ))}
         </View>
       </ScrollView>
-      <BottomNavigation />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafd' },
-  headerRow: {
+  container: { flex: 1 }, // backgroundColor moved to inline style for theme support
+  Row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
@@ -136,18 +122,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 32,
     paddingBottom: 10,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
-  headerTitle: {
+  Title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#1a237e',
     textAlign: 'center',
     marginBottom: 2,
   },
-  headerSubtitle: {
+  Subtitle: {
     fontSize: 13,
     color: '#64748b',
     textAlign: 'center',
@@ -194,7 +179,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   portfolioCard: {
-    backgroundColor: '#fff',
     borderRadius: 18,
     marginHorizontal: 14,
     marginBottom: 18,
@@ -234,7 +218,6 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 7,
@@ -242,7 +225,6 @@ const styles = StyleSheet.create({
   searchPlaceholder: { color: '#888', fontSize: 13 },
   walletsList: { marginHorizontal: 14, marginTop: 2 },
   walletCard: {
-    backgroundColor: '#fff',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -254,7 +236,7 @@ const styles = StyleSheet.create({
   },
   walletCardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   walletCurrency: { fontWeight: 'bold', color: '#1a237e', fontSize: 15 },
-  walletBalance: { fontWeight: 'bold', color: '#6366f1', fontSize: 15 },
+  walletBalance: { fontWeight: 'bold', color: '#64748b', fontSize: 15 },
   walletEstValue: { fontSize: 12, color: '#64748b', marginBottom: 8 },
   walletActionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   walletActionBtn: {
@@ -268,7 +250,6 @@ const styles = StyleSheet.create({
   },
   walletActionText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
   assetDistributionCard: {
-    backgroundColor: '#fff',
     borderRadius: 14,
     marginHorizontal: 14,
     marginTop: 18,
@@ -283,11 +264,10 @@ const styles = StyleSheet.create({
   },
   assetDistributionTitle: { fontWeight: 'bold', color: '#1a237e', fontSize: 15, marginBottom: 6 },
   assetDistributionChartPlaceholder: {
-    width: 110, height: 110, borderRadius: 55, backgroundColor: '#f3f4f6', marginVertical: 8,
+    width: 110, height: 110, borderRadius: 55, marginVertical: 8,
   },
   assetDistributionLegend: { color: '#64748b', fontSize: 12, marginTop: 4, textAlign: 'center' },
   transactionsCard: {
-    backgroundColor: '#fff',
     borderRadius: 14,
     marginHorizontal: 14,
     marginTop: 18,

@@ -9,10 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Picker } from '@react-native-picker/picker';
 import { Slider } from "@/components/ui/slider";
-import BottomNavigation from "@/components/BottomNavigation";
+// import BottomNavigation from "@/components/BottomNavigation";
 import { LineChart, Grid } from "react-native-svg-charts";
 import * as shape from "d3-shape";
-import Svg, { LinearGradient, Stop, Defs } from "react-native-svg";
+import Svg, { LinearGradient as SvgLinearGradient, Stop, Defs } from "react-native-svg";
 
 const pairs = [
   { pair: "BTC/USDT", price: "61,245.32", change: 2.4, iconUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
@@ -25,7 +25,10 @@ const pairs = [
 
 const mockChartData = [61000, 61200, 61100, 61400, 61350, 61500, 61700, 61900, 61800];
 
+import { useTheme } from '@/contexts/ThemeContext';
+
 const TradePage = () => {
+  const { theme } = useTheme();
   const navigation = useNavigation();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,7 +59,7 @@ const TradePage = () => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {/* Header */}
       <View style={{ paddingTop: 40, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Button
@@ -79,7 +82,7 @@ const TradePage = () => {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Image 
                 source={{ uri: currentPair?.iconUrl }}
-                style={{ height: 32, width: 32, marginRight: 8, backgroundColor: '#fff', borderRadius: 16, padding: 2 }}
+                style={{ height: 32, width: 32, marginRight: 8, backgroundColor: theme.colors.background, borderRadius: 16, padding: 2 }}
               />
               <View>
                 <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{selectedPair}</Text>
@@ -111,10 +114,10 @@ const TradePage = () => {
           <View style={{ height: 180 }}>
             <Svg width={180} height={180} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
               <Defs>
-                <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                <SvgLinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                   <Stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
                   <Stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </LinearGradient>
+                </SvgLinearGradient>
               </Defs>
             </Svg>
             <LineChart
@@ -129,10 +132,10 @@ const TradePage = () => {
           </View>
           <View style={{ flexDirection: 'row', marginTop: 16 }}>
             <Button 
-              style={{ marginRight: 4, backgroundColor: timeRange === "day" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
+              style={{ marginRight: 4, backgroundColor: timeRange === "day" ? theme.colors.primary : theme.colors.background, borderColor: '#10b981', borderWidth: 1 }}
               onPress={() => setTimeRange("day")}
             >
-              <Text style={{ color: timeRange === "day" ? '#fff' : '#10b981' }}>24H</Text>
+              <Text style={{ color: timeRange === "day" ? theme.colors.background : theme.colors.primary }}>24H</Text>
             </Button>
             <Button 
               style={{ marginRight: 4, backgroundColor: timeRange === "week" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
@@ -207,15 +210,15 @@ const TradePage = () => {
             </Card>
           </TabsContent>
           <TabsContent tabValue="sell">
-            <Card style={{ padding: 16 }}>
+            <Card style={{ padding: 16, backgroundColor: theme.colors.card }}>
               <View style={{ marginBottom: 16 }}>
                 <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Amount ({selectedPair.split('/')[0]})</Text>
                 <Input
-  value={amount.toString()}
-  onChangeText={text => setAmount(Number(text))}
-  keyboardType="numeric"
-  style={{}}
-/>
+                  value={amount.toString()}
+                  onChangeText={text => setAmount(Number(text))}
+                  keyboardType="numeric"
+                  style={{}}
+                />
                 <Slider
                   value={[amount]}
                   max={maxAmount}
@@ -247,7 +250,7 @@ const TradePage = () => {
         <View style={{ marginTop: 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Trading Pairs</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.card, borderRadius: 8, paddingHorizontal: 8 }}>
               <Feather name="search" size={16} color="#888" style={{ marginRight: 4 }} />
               <Input
   style={{ height: 32, width: 120 }}
@@ -257,7 +260,7 @@ const TradePage = () => {
 />
             </View>
           </View>
-          <Card style={{ backgroundColor: '#fff', overflow: 'hidden' }}>
+          <Card style={{ backgroundColor: theme.colors.background, overflow: 'hidden' }}>
             {filteredPairs.map((pair) => (
               <View 
                 key={pair.pair} 
@@ -267,7 +270,7 @@ const TradePage = () => {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Image 
                     source={{ uri: pair.iconUrl }} 
-                    style={{ height: 32, width: 32, marginRight: 12, backgroundColor: '#fff', borderRadius: 16, padding: 2 }} 
+                    style={{ height: 32, width: 32, marginRight: 12, backgroundColor: theme.colors.background, borderRadius: 16, padding: 2 }} 
                   />
                   <Text style={{ fontWeight: '500' }}>{pair.pair}</Text>
                 </View>
@@ -289,7 +292,7 @@ const TradePage = () => {
           </Card>
         </View>
       </View>
-      <BottomNavigation />
+      {/* <BottomNavigation /> */}
     </View>
   );
 };

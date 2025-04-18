@@ -8,7 +8,83 @@ import Input from "@/components/ui/input";
 import Logo from "@/components/Logo";
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useTheme } from "@/contexts/ThemeContext";
+
 const ForgotPassword = () => {
+  const { theme } = useTheme();
+  const styles = StyleSheet.create({
+    bg: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
+    card: {
+      width: '100%',
+      maxWidth: 420,
+      backgroundColor: theme.colors.card,
+      borderRadius: 22,
+      paddingVertical: 32,
+      paddingHorizontal: 22,
+      alignSelf: 'center',
+      marginTop: 24,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+    },
+    logo: {
+      width: 64,
+      height: 64,
+      alignSelf: 'center',
+      marginBottom: 8,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: theme.colors.text,
+      marginBottom: 2,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: 15,
+      color: theme.colors.secondaryText,
+      textAlign: 'center',
+      marginBottom: 18,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      backgroundColor: theme.colors.card,
+      marginBottom: 8,
+    },
+    resetBtn: {
+      marginTop: 12,
+      width: '100%',
+      maxWidth: 340,
+      alignSelf: 'center',
+    },
+    backLink: {
+      marginTop: 18,
+      alignSelf: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    link: {
+      color: theme.colors?.primary || '#1a237e',
+      fontWeight: '600',
+      marginLeft: 6,
+    },
+  });
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -81,77 +157,5 @@ const ForgotPassword = () => {
     </LinearGradient>
   );
 };
-
-const styles = StyleSheet.create({
-  bg: {
-    flex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: '#fff',
-    borderRadius: 22,
-    paddingVertical: 32,
-    paddingHorizontal: 22,
-    shadowColor: '#10b981',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 32,
-    elevation: 8,
-    alignItems: 'center',
-  },
-  logo: {
-    marginBottom: 18,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#10b981',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#5c5e6b',
-    marginBottom: 18,
-    textAlign: 'center',
-  },
-  input: {
-    width: '100%',
-    fontSize: 16,
-    color: '#222',
-    paddingVertical: 10,
-    backgroundColor: '#f6f8fa',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#e0e7ef',
-    marginBottom: 18,
-    marginTop: 12,
-    paddingHorizontal: 12,
-  },
-  resetBtn: {
-    width: '100%',
-    backgroundColor: '#10b981',
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginBottom: 12,
-  },
-  backLink: {
-    marginTop: 4,
-  },
-  link: {
-    color: '#10b981',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-    fontSize: 15,
-    textAlign: 'center',
-  },
-});
 
 export default ForgotPassword;

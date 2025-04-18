@@ -6,8 +6,10 @@ import { toast, useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Picker } from '@react-native-picker/picker';
 import { useState } from "react";
- 
+import { useTheme } from "@/contexts/ThemeContext";
+
 const KycVerification = ({ navigation }: any) => {
+  const { theme } = useTheme();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("id-verification");
   const [idType, setIdType] = useState("passport");
@@ -63,7 +65,7 @@ const KycVerification = ({ navigation }: any) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f8fafd' }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBack} onPress={() => navigation && navigation.goBack ? navigation.goBack() : null}>
@@ -196,7 +198,7 @@ const KycVerification = ({ navigation }: any) => {
                 </Button>
               </View>
             </View>
-            <View style={[styles.card, { backgroundColor: '#fffbe7', borderColor: '#ffe082' }]}> 
+            <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: '#ffe082' }]}> 
               <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                 <Feather name="alert-triangle" size={20} color="#ff9800" style={{ marginTop: 2, marginRight: 10 }} />
                 <Text style={[styles.cardDesc, { color: '#b8860b', flex: 1 }]}>The document must clearly show your full name, current address, and issue date (within the last 3 months).</Text>
@@ -220,13 +222,89 @@ const KycVerification = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
+  card: {
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginBottom: 18,
+    shadowColor: '#3949ab',
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#222',
+    marginBottom: 4,
+  },
+  cardDesc: {
+    fontSize: 14,
+    color: '#5c5e6b',
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 6,
+    color: '#222',
+  },
+  pickerWrap: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    marginBottom: 12,
+    backgroundColor: '#fff',
+  },
+  picker: {
+    height: 44,
+    width: '100%',
+  },
+  btnRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 10,
+  },
+  uploadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#03a9f4',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginHorizontal: 2,
+  },
+  uploadBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  submitBtn: {
+    backgroundColor: '#3949ab',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 18,
     paddingBottom: 12,
     paddingHorizontal: 18,
-    backgroundColor: '#f8fafd',
+    
     borderBottomWidth: 1,
     borderBottomColor: '#ececec',
   },
@@ -276,82 +354,6 @@ const styles = StyleSheet.create({
   },
   tabBtnTextActive: {
     color: '#fff',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    marginBottom: 18,
-    shadowColor: '#3949ab',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontWeight: '600',
-    fontSize: 16,
-    marginBottom: 2,
-    color: '#222',
-  },
-  cardDesc: {
-    color: '#888',
-    fontSize: 13,
-  },
-  label: {
-    fontWeight: '500',
-    marginBottom: 6,
-    color: '#1a237e',
-    fontSize: 15,
-  },
-  pickerWrap: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#f7f8fa',
-  },
-  picker: {
-    height: 42,
-    width: '100%',
-  },
-  btnRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  uploadBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f1f4ff',
-    borderRadius: 8,
-    paddingVertical: 10,
-    marginHorizontal: 2,
-  },
-  uploadBtnText: {
-    color: '#3949ab',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  submitBtn: {
-    backgroundColor: '#3949ab',
-    borderRadius: 12,
-    paddingVertical: 16,
-    width: '100%',
-    alignItems: 'center',
-  },
-  submitBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 17,
   },
 });
 

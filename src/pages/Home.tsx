@@ -1,21 +1,25 @@
-
-import { useState, useEffect } from "react";
-import { View, Text, ScrollView, SafeAreaView, StyleSheet, TouchableOpacity, Image, StatusBar } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from 'expo-linear-gradient';
-import Button from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
+//src/pages/Home.tsx
+import { useState, useRef, useEffect } from "react";
+import { View, Text, ScrollView, SafeAreaView, StyleSheet, StatusBar } from "react-native";
 import Logo from "@/components/Logo";
-import WalletCard from "@/components/WalletCard";
-import TransactionItem from "@/components/TransactionItem";
-import BottomNavigation from "@/components/BottomNavigation";
-import { mockWallets, mockTransactions } from "@/lib/quidax";
+import { mockWallets } from "@/lib/quidax";
 import { useAuth } from "@/contexts/AuthContext";
  
+import HeroSection from "@/components/HeroSection";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Dimensions } from 'react-native';
+import CallToAction from "@/components/CallToAction";
+import { useNavigation } from "@react-navigation/native";
+import VisionBoard from "@/components/VisionBoard";
+
+// --- Main Home Page ---
 const Home = () => {
+  const { theme } = useTheme();
   const { user } = useAuth();
   const [totalBalance, setTotalBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (!user) {
@@ -30,6 +34,10 @@ const Home = () => {
     return () => clearTimeout(timer);
   }, [user]);
 
+  const scrollToNext = () => {
+    scrollRef.current?.scrollTo({ y: 360, animated: true });
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafd' }}>
@@ -42,100 +50,27 @@ const Home = () => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafd' }}>
-      <StatusBar barStyle="light-content" />
-      {/* Header with gradient and avatar */}
-      <LinearGradient
-        colors={["#1a237e", "#3949ab"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <View style={styles.headerRow}>
-          <Logo size="md" />
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity style={styles.iconButton}>
-              <Feather name="bell" size={22} color="#fff" />
-            </TouchableOpacity>
-            <ThemeToggle />
-            <Image
-              source={{ uri: user?.user_metadata?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User')}` }}
-              style={styles.avatar}
-            />
-          </View>
-        </View>
-        <View style={styles.banner}>
-          <Text style={styles.bannerWelcome}>Welcome back,</Text>
-          <Text style={styles.bannerName}>{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</Text>
-        </View>
-      </LinearGradient>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar barStyle={theme.colors.background === '#101522' ? 'light-content' : 'dark-content'} />
+      <View style={{ flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          ref={scrollRef}
+          contentContainerStyle={{
+            flexGrow: 1,
+            minHeight: Dimensions.get('window').height + 1,
+            paddingTop: 0,
+            paddingBottom: 90, // Ensures content is not hidden behind CTA
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* --- HERO SECTION --- */}
+          <HeroSection user={user} navigation={navigation} scrollToNext={scrollToNext} />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 90 }}>
-        {/* Balance Card */}
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceValue}>${totalBalance.toLocaleString()}</Text>
-          {/* Quick Actions */}
-          <View style={styles.quickActionsRow}>
-            <Button style={styles.quickActionBtn} onPress={() => {/* navigate to Deposit */}}>
-              <Feather name="arrow-down-circle" size={20} color="#1a237e" />
-              <Text style={styles.quickActionText}>Deposit</Text>
-            </Button>
-            <Button style={styles.quickActionBtn} onPress={() => {/* navigate to Withdraw */}}>
-              <Feather name="arrow-up-circle" size={20} color="#1a237e" />
-              <Text style={styles.quickActionText}>Withdraw</Text>
-            </Button>
-            <Button style={styles.quickActionBtn} onPress={() => {/* navigate to Transfer */}}>
-              <Feather name="repeat" size={20} color="#1a237e" />
-              <Text style={styles.quickActionText}>Transfer</Text>
-            </Button>
-          </View>
-        </View>
-
-        {/* Wallets */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Your Wallets</Text>
-          <TouchableOpacity onPress={() => {/* navigate to Wallets */}}>
-            <Text style={styles.sectionAction}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24 }}>
-          {mockWallets.map((wallet, idx) => (
-            <WalletCard
-              key={wallet.id}
-              name={wallet.name}
-              symbol={wallet.symbol}
-              balance={wallet.balance}
-              fiatValue={wallet.fiatValue}
-              iconUrl={wallet.iconUrl}
-              style={{ ...styles.walletCard, marginLeft: idx === 0 ? 16 : 0, marginRight: 16 }}
-            />
-          ))}
+          {/* --- VisionBoard (includes FeatureShowcase, UserFeedback) --- */}
+          <VisionBoard />
         </ScrollView>
-
-        {/* Recent Transactions */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Recent Transactions</Text>
-          <TouchableOpacity onPress={() => {/* navigate to Transactions */}}>
-            <Text style={styles.sectionAction}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.transactionsCard}>
-          {mockTransactions.slice(0, 3).map((tx) => (
-            <TransactionItem
-              key={tx.id}
-              id={tx.id}
-              type={tx.type as "deposit" | "withdrawal"}
-              amount={tx.amount}
-              currency={tx.currency}
-              status={tx.status as "pending" | "completed" | "failed"}
-              createdAt={tx.createdAt}
-              fee={tx.fee}
-            />
-          ))}
-        </View>
-      </ScrollView>
-      <BottomNavigation />
+      </View>
     </SafeAreaView>
   );
 };

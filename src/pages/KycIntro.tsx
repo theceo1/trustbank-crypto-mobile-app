@@ -4,8 +4,77 @@ import { View, Text, ScrollView, SafeAreaView, StyleSheet, TouchableOpacity, Dim
 import { Feather } from "@expo/vector-icons";
 import Button from "@/components/ui/button";
 import Logo from "@/components/Logo";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const KycIntro = ({ navigation }: any) => {
+  const { theme } = useTheme();
+  const styles = StyleSheet.create({
+    stepCard: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: theme.colors?.card || '#fff',
+      borderRadius: 14,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: theme.colors?.border || '#e5e7eb',
+      marginBottom: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    stepIconWrap: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.colors?.background || '#f1f5f9',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 16,
+    },
+    stepTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: theme.colors?.text || '#1a237e',
+      marginBottom: 2,
+    },
+    stepDesc: {
+      fontSize: 13,
+      color: theme.colors?.secondaryText || '#64748b',
+    },
+    info: {
+      fontSize: 14,
+      color: theme.colors?.secondaryText || '#64748b',
+      marginBottom: 16,
+      marginTop: 8,
+      textAlign: 'center',
+    },
+    footer: {
+      marginTop: 24,
+      alignItems: 'center',
+    },
+    footerButton: {
+      marginTop: 16,
+      width: '100%',
+      maxWidth: 340,
+      alignSelf: 'center',
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: theme.colors?.text || '#1a237e',
+      marginBottom: 2,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: 15,
+      color: theme.colors?.secondaryText || '#64748b',
+      textAlign: 'center',
+      marginBottom: 18,
+    },
+  });
+
   // Feather icon names: file-text, shield, credit-card
   const steps = [
     {
@@ -85,77 +154,5 @@ const KycIntro = ({ navigation }: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    color: '#1a237e',
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#666',
-    fontSize: 15,
-    textAlign: 'center',
-    maxWidth: 320,
-    marginBottom: 0,
-  },
-  stepCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    marginBottom: 0,
-    shadowColor: '#3949ab',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-  },
-  stepIconWrap: {
-    backgroundColor: '#f1f4ff',
-    borderRadius: 32,
-    padding: 8,
-    marginRight: 14,
-    marginTop: 2,
-  },
-  stepTitle: {
-    fontWeight: '600',
-    fontSize: 16,
-    marginBottom: 2,
-    color: '#222',
-  },
-  stepDesc: {
-    color: '#888',
-    fontSize: 13,
-  },
-  info: {
-    color: '#888',
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: 24,
-    backgroundColor: '#f8fafd',
-    borderTopWidth: 1,
-    borderTopColor: '#ececec',
-  },
-  footerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#3949ab',
-    borderRadius: 12,
-    paddingVertical: 16,
-    width: '100%',
-  },
-});
 
 export default KycIntro;

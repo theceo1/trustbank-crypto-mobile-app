@@ -23,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "d3-shape": "^3.2.0",
     "date-fns": "^4.1.0",
+    "deprecated-react-native-prop-types": "^5.0.0",
     "expo": "^50.0.0",
     "expo-clipboard": "^7.0.1",
     "expo-linear-gradient": "^14.0.2",
@@ -37,6 +38,7 @@
     "react-native-svg-charts": "^5.4.0",
     "react-native-toast-notifications": "^3.4.0",
     "react-native-url-polyfill": "^2.0.0",
+    "react-native-vector-icons": "^10.2.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

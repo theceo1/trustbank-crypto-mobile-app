@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useTheme } from "@react-navigation/native";
 
 import Button from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import BottomNavigation from "@/components/BottomNavigation";
-import { ScrollView, TextInput, View, Text, Image } from "react-native";
+import { ScrollView, TextInput, View, Text, Image, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 // Mock exchange rates for crypto currencies
@@ -31,9 +30,195 @@ const cryptoIcons = {
 };
 
 const CalculatorPage = () => {
+  const { colors } = useTheme();
   const navigation = useNavigation();
   const { toast } = useToast();
-  
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background || '#fff',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 18,
+      paddingTop: 24,
+      paddingBottom: 18,
+      backgroundColor: colors.card || '#fff',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border || '#e5e7eb',
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerIconBtn: {
+      marginRight: 10,
+      borderRadius: 8,
+      borderColor: colors.border || '#e5e7eb',
+      borderWidth: 1,
+      backgroundColor: colors.background || '#f8fafc',
+      padding: 4,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.text || '#1a237e',
+    },
+    headerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    content: {
+      flex: 1,
+      padding: 18,
+    },
+    tabsList: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 18,
+    },
+    tabBtn: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 10,
+      borderRadius: 8,
+      borderColor: colors.border || '#e5e7eb',
+      borderWidth: 1,
+      backgroundColor: colors.background || '#f8fafc',
+    },
+    tabBtnActive: {
+      backgroundColor: colors.primary || '#03a9f4',
+      borderColor: colors.primary || '#03a9f4',
+    },
+    tabText: {
+      fontSize: 16,
+      color: colors.text || '#1a237e',
+    },
+    card: {
+      padding: 18,
+      borderRadius: 8,
+      backgroundColor: colors.card || '#fff',
+      borderColor: colors.border || '#e5e7eb',
+      borderWidth: 1,
+    },
+    displayBox: {
+      marginBottom: 18,
+    },
+    displayText: {
+      fontSize: 48,
+      fontWeight: '700',
+      color: colors.text || '#1a237e',
+    },
+    displaySubText: {
+      fontSize: 16,
+      color: colors.text || '#1a237e',
+    },
+    keypadGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    keyBtn: {
+      width: '25%',
+      aspectRatio: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 10,
+      borderRadius: 8,
+      borderColor: colors.border || '#e5e7eb',
+      borderWidth: 1,
+      backgroundColor: colors.background || '#f8fafc',
+    },
+    keyBtnOp: {
+      backgroundColor: colors.primary || '#03a9f4',
+      borderColor: colors.primary || '#03a9f4',
+    },
+    keyBtnDouble: {
+      width: '50%',
+    },
+    keyBtnText: {
+      fontSize: 24,
+      color: colors.text || '#1a237e',
+    },
+    // Converter styles
+    converterSection: {
+      marginTop: 8,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text || '#1a237e',
+      marginBottom: 4,
+    },
+    pickerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    cryptoIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      marginRight: 8,
+      backgroundColor: colors.card || '#fff',
+    },
+    picker: {
+      flex: 1,
+      color: colors.text || '#1a237e',
+      backgroundColor: colors.card || '#fff',
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border || '#e5e7eb',
+      borderRadius: 8,
+      padding: 10,
+      fontSize: 18,
+      color: colors.text || '#1a237e',
+      backgroundColor: colors.background || '#f8fafc',
+      marginBottom: 8,
+    },
+    swapRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginVertical: 8,
+    },
+    swapBtn: {
+      borderRadius: 24,
+      padding: 8,
+      backgroundColor: colors.primary || '#03a9f4',
+    },
+    exchangeRateBox: {
+      marginTop: 8,
+      padding: 8,
+      backgroundColor: colors.background || '#f8fafc',
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border || '#e5e7eb',
+    },
+    exchangeRateLabel: {
+      fontSize: 14,
+      color: colors.text || '#1a237e',
+      marginBottom: 2,
+    },
+    exchangeRateText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text || '#1a237e',
+    },
+    converterNoteBox: {
+      marginTop: 8,
+      alignItems: 'flex-start',
+    },
+    noteText: {
+      fontSize: 13,
+      color: colors.text || '#64748b',
+    },
+  });
+
   // Calculator state
   const [display, setDisplay] = useState("0");
   const [previousValue, setPreviousValue] = useState<number | null>(null);
@@ -311,59 +496,8 @@ const CalculatorPage = () => {
           </Card>
         )}
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation />
     </View>
   );
 };
-
-import { StyleSheet } from 'react-native';
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 56,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  headerRight: { flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '600', marginLeft: 12 },
-  headerIconBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 4 },
-  content: { flex: 1, backgroundColor: '#f8fafc' },
-  tabsList: { flexDirection: 'row', marginTop: 8, marginBottom: 16, justifyContent: 'center' },
-  tabBtn: { flex: 1, marginHorizontal: 4, borderRadius: 20, paddingVertical: 10 },
-  tabBtnActive: { backgroundColor: '#1a237e' },
-  tabText: { textAlign: 'center', fontSize: 16, fontWeight: '500', color: '#1a237e' },
-  card: { margin: 16, padding: 16, borderRadius: 16, backgroundColor: '#fff', elevation: 2 },
-  displayBox: { backgroundColor: '#f1f5f9', borderRadius: 12, padding: 16, marginBottom: 16 },
-  displayText: { fontSize: 40, fontWeight: 'bold', textAlign: 'right', color: '#111' },
-  displaySubText: { fontSize: 14, color: '#64748b', textAlign: 'right', marginTop: 4 },
-  keypadGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  keyBtn: { width: '22%', marginVertical: 6, aspectRatio: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 12, backgroundColor: '#f1f5f9' },
-  keyBtnText: { fontSize: 22, fontWeight: '600', color: '#1a237e' },
-  keyBtnOp: { backgroundColor: '#1a237e' },
-  keyBtnDouble: { width: '47%' },
-  converterSection: { marginTop: 8 },
-  label: { fontSize: 14, color: '#64748b', marginBottom: 6, fontWeight: '500' },
-  pickerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  cryptoIcon: { width: 28, height: 28, marginRight: 8, borderRadius: 14, backgroundColor: '#fff' },
-  picker: { flex: 1, height: 44 },
-  input: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#fff', marginBottom: 8 },
-  swapRow: { alignItems: 'center', marginVertical: 12 },
-  swapBtn: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center' },
-  exchangeRateBox: { marginTop: 8 },
-  exchangeRateLabel: { fontSize: 13, color: '#64748b', fontWeight: '500' },
-  exchangeRateText: { fontSize: 15, color: '#1a237e', fontWeight: '600' },
-  converterNoteBox: { marginTop: 14 },
-  noteText: { fontSize: 13, color: '#64748b', marginBottom: 2 },
-});
 
 export default CalculatorPage;

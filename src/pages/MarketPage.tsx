@@ -3,11 +3,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { View, Image, Text } from "react-native";
-import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import BottomNavigation from "@/components/BottomNavigation";
+// import Button from "@/components/ui/button";
+// import Input from "@/components/ui/input";
+// import { Card } from "@/components/ui/card";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// NOTE: The above custom UI components are commented out to isolate a native crash.
 import { AreaChart, LineChart, Grid } from "react-native-svg-charts";
 import * as shape from "d3-shape";
 import Svg, { Defs, LinearGradient, Stop } from "react-native-svg";
@@ -187,12 +187,7 @@ const MarketPage = () => {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Header */}
       <View style={{ paddingTop: 40, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-        <Button
-          style={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0, margin: 0 }}
-          onPress={() => navigation.navigate("Dashboard" as never)}
-        >
-          <Feather name="chevron-left" size={20} />
-        </Button>
+        
         <View style={{ marginLeft: 8 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Market</Text>
         </View>
@@ -203,16 +198,13 @@ const MarketPage = () => {
         {/* Search bar */}
         <View style={{ position: 'relative', marginBottom: 24 }}>
           <Feather name="search" size={16} style={{ position: 'absolute', left: 12, top: 14, color: '#888' }} />
-          <Input
-            style={{ paddingLeft: 36 }}
-            placeholder="Search coins..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+          <View style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 8, paddingLeft: 36 }}>
+  <Text style={{ color: '#888', paddingVertical: 8 }}>{searchQuery || 'Search coins...'}</Text>
+</View>
         </View>
 
         {/* Overview */}
-        <Card style={{ padding: 16, marginBottom: 24 }}>
+        <View style={{ padding: 16, marginBottom: 24, backgroundColor: '#fff', borderRadius: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
             <View>
               <Text style={{ fontSize: 12, color: '#888' }}>Market Cap</Text>
@@ -227,37 +219,31 @@ const MarketPage = () => {
               <Text style={{ fontSize: 18, fontWeight: 'bold' }}>43.2%</Text>
             </View>
           </View>
-          <View style={{ marginTop: 16, height: 96 }}>
-            <Svg width={96} height={96} style={StyleSheet.absoluteFill}>
-              <Defs>
-                <LinearGradient id="colorMarketCap" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                  <Stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </LinearGradient>
-              </Defs>
-            </Svg>
-            <AreaChart
-              style={{ height: 96 }}
-              data={[2.2, 2.25, 2.3, 2.32, 2.35, 2.38, 2.4]}
-              contentInset={{ top: 10, bottom: 10 }}
-              curve={shape.curveMonotoneX}
-              svg={{ fill: 'url(#colorMarketCap)' }}
-            >
-              <Grid />
-            </AreaChart>
-          </View>
-        </Card>
+          <View style={{ marginTop: 16, height: 96, backgroundColor: '#e8fdf3', borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+  <Text style={{ color: '#10b981' }}>Market chart unavailable</Text>
+</View>
+        </View>
 
         {/* Tabs and Coin List */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger tabValue="all">All</TabsTrigger>
-            <TabsTrigger tabValue="favorites">Favorites</TabsTrigger>
-            <TabsTrigger tabValue="gainers">Gainers</TabsTrigger>
-            <TabsTrigger tabValue="losers">Losers</TabsTrigger>
-          </TabsList>
-
-          <TabsContent tabValue={activeTab}>
+        <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+  {['all', 'favorites', 'gainers', 'losers'].map(tab => (
+    <Text
+      key={tab}
+      onPress={() => setActiveTab(tab)}
+      style={{
+        padding: 8,
+        marginRight: 8,
+        backgroundColor: activeTab === tab ? '#10b981' : '#f6f6f6',
+        color: activeTab === tab ? '#fff' : '#333',
+        borderRadius: 4,
+        fontWeight: 'bold',
+      }}
+    >
+      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+    </Text>
+  ))}
+</View>
+<View>
             <View style={{ borderRadius: 8, borderWidth: 1, borderColor: '#eee', overflow: 'hidden' }}>
               {/* Table header */}
               <View style={{ flexDirection: 'row', padding: 12, backgroundColor: '#f6f6f6' }}>
@@ -272,59 +258,11 @@ const MarketPage = () => {
                 </View>
               </View>
               {/* Data rows */}
-              {data.length > 0 ? (
-                data.map((coin) => (
-                  <View
-                    key={coin.id}
-                    style={{ flexDirection: 'row', padding: 16, alignItems: 'center', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' }}
-                  >
-                    <View style={{ flex: 5, flexDirection: 'row', alignItems: 'center' }}>
-                      <Button
-                        style={{ height: 32, width: 32, marginRight: 12, backgroundColor: 'transparent' }}
-                        onPress={() => toggleFavorite(coin.id)}
-                      >
-                        <FontAwesome name="star" size={16} color={coin.isFavorite ? "#facc15" : "#888"} solid={coin.isFavorite} />
-                      </Button>
-                      <Image
-                        source={{ uri: coin.iconUrl }}
-                        style={{ height: 32, width: 32, marginRight: 12, backgroundColor: '#fff', borderRadius: 16, padding: 2 }}
-                      />
-                      <View>
-                        <Text style={{ fontWeight: 'bold' }}>{coin.name}</Text>
-                        <Text style={{ fontSize: 12, color: '#888' }}>{coin.symbol}</Text>
-                      </View>
-                    </View>
-                    <View style={{ flex: 3, alignItems: 'flex-end' }}>
-                      <Text style={{ fontWeight: 'bold' }}>${coin.price.toLocaleString()}</Text>
-                    </View>
-                    <View style={{ flex: 2, alignItems: 'flex-end' }}>
-                      <Text style={{ color: coin.change >= 0 ? '#10b981' : '#ef4444' }}>
-                        {coin.change >= 0 ? '+' : ''}{coin.change}%
-                      </Text>
-                    </View>
-                    <View style={{ flex: 2 }}>
-                      <View style={{ height: 40 }}>
-                        <LineChart
-                          style={{ height: 40, width: 60 }}
-                          data={coin.priceHistory}
-                          svg={{ stroke: coin.change >= 0 ? "#10b981" : "#ef4444", strokeWidth: 2 }}
-                          contentInset={{ top: 8, bottom: 8 }}
-                          curve={shape.curveMonotoneX}
-                        />
-                      </View>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <View style={{ padding: 32, alignItems: 'center' }}>
-                  <Text style={{ color: '#888' }}>No coins found matching your criteria.</Text>
-                </View>
-              )}
+              {/* Coin list rendering temporarily commented out to isolate crash */}
+<Text>Test</Text>
             </View>
-          </TabsContent>
-        </Tabs>
+          </View>
       </View>
-      <BottomNavigation />
     </View>
   );
 };

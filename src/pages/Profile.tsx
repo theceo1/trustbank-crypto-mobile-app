@@ -1,19 +1,35 @@
-
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
-import Button from "@/components/ui/button";
-import { Feather } from '@expo/vector-icons';
-import BottomNavigation from "@/components/BottomNavigation";
- 
+import { Feather } from "@expo/vector-icons";
+
+const TABS = [
+  { key: "personal", label: "Personal Information", icon: "user" },
+  { key: "security", label: "Security", icon: "shield" },
+  { key: "referral", label: "Referral Program", icon: "users" },
+];
+
+const mockUser = {
+  name: "John Doe",
+  email: "test1735848851306@trustbank.tech",
+  phone: "",
+  country: "Nigeria",
+  verificationStatus: "verified",
+  joinedDate: "2024-01-01",
+  timezone: "Africa/Lagos",
+  language: "English",
+};
+
 const Profile = () => {
+  const [tab, setTab] = useState("personal");
   const { user, signOut } = useAuth();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setThemeName } = useTheme();
   const navigation = useNavigation();
   const { toast } = useToast();
+  const dark = theme.colors.background === '#101522';
 
   const handleSignOut = async () => {
     try {
@@ -59,84 +75,108 @@ const Profile = () => {
     },
     {
       title: "Help & Support",
-      icon: "help-circle",
-      route: "Help",
-      description: "FAQs, contact support, and help center",
+      icon: "headphones",
+      route: "HelpSupport",
+      description: "Get assistance with any issues or questions",
     },
   ];
 
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === "light" ? "dark" : "light");
-  };
-
   return (
-    <View style={styles.bg}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
+    <View style={[styles.bg, { backgroundColor: theme.colors.background }]}>
+      {/* Tabs */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 18, marginBottom: 0 }}>
+        {TABS.map((t) => (
           <TouchableOpacity
-            style={styles.themeToggleRow}
-            onPress={toggleTheme}
-            accessibilityLabel="Toggle theme"
+            key={t.key}
+            style={{
+              backgroundColor: tab === t.key ? '#10b981' : '#e8fdf3',
+              paddingVertical: 10,
+              paddingHorizontal: 18,
+              borderRadius: 18,
+              marginHorizontal: 5,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            onPress={() => setTab(t.key)}
           >
-            <Feather
-              name={resolvedTheme === "light" ? "sun" : "moon"}
-              size={22}
-              color="#10b981"
-              style={{ marginRight: 10 }}
-            />
-            <Text style={styles.themeToggleText}>
-              {resolvedTheme === "light" ? "Light mode" : "Dark mode"}
-            </Text>
+            <Feather name={t.icon as any} size={18} color={tab === t.key ? '#fff' : '#10b981'} style={{ marginRight: 6 }} />
+            <Text style={{ color: tab === t.key ? '#fff' : '#10b981', fontWeight: 'bold' }}>{t.label}</Text>
           </TouchableOpacity>
-        </View>
+        ))}
+      </View>
 
-        {/* User Profile */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatarCircle}>
-            <Feather name="user" size={38} color="#10b981" />
-          </View>
-          <View>
-            <Text style={styles.profileName}>{user?.email?.split('@')[0] || 'User'}</Text>
-            <Text style={styles.profileEmail}>{user?.email}</Text>
-          </View>
-        </View>
-
-        {/* Menu Items */}
-        <View style={styles.menuList}>
-          {menuItems.map((item) => (
-            <TouchableOpacity
-              key={item.title}
-              style={styles.menuItem}
-              onPress={() => navigation.navigate(item.route as never)}
-              activeOpacity={0.85}
-              accessibilityLabel={item.title}
-            >
-              <View style={styles.menuIconBox}>
-                <Feather name={item.icon as any} size={22} color="#10b981" />
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/* Tab Content */}
+        {tab === 'personal' && (
+          <>
+            {/* Profile Header */}
+            <View style={[styles.profileCard, { backgroundColor: theme.colors.card }]}>
+              <View style={styles.avatarCircle}>
+                <Feather name="user" size={38} color="#10b981" />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.menuTitle}>{item.title}</Text>
-                <Text style={styles.menuDesc}>{item.description}</Text>
+              <View>
+                <Text style={styles.profileName}>{user?.email?.split('@')[0] || 'User'}</Text>
+                <Text style={styles.profileEmail}>{user?.email}</Text>
+                <View style={{ flexDirection: 'row', marginTop: 6 }}>
+                  <View style={{ backgroundColor: theme.colors.card, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, marginRight: 8 }}>
+                    <Text style={{ color: '#10b981', fontWeight: 'bold', fontSize: 12 }}>{mockUser.verificationStatus === 'verified' ? 'Verified' : 'Unverified'}</Text>
+                  </View>
+                  <View style={{ backgroundColor: theme.colors.card, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 }}>
+                    <Text style={{ color: '#64748b', fontWeight: 'bold', fontSize: 12 }}>Member since {mockUser.joinedDate}</Text>
+                  </View>
+                </View>
               </View>
-              <Feather name="chevron-right" size={22} color="#a1a1aa" />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Logout Button */}
-        <Button
-          style={styles.logoutBtn}
-          onPress={handleSignOut}
-        >
-          <Feather name="log-out" size={18} color="#e11d48" style={{ marginRight: 8 }} />
-          <Text style={styles.logoutText}>Log out</Text>
-        </Button>
-
-        <Text style={styles.versionText}>trustBank App v1.0.0</Text>
+            </View>
+            {/* Details Grid */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginHorizontal: 18 }}>
+              {/* Contact Information */}
+              <View style={[styles.infoCard, { width: '100%', marginBottom: 14 }]}> 
+                <Text style={styles.infoCardTitle}>Contact Information</Text>
+                <Text style={styles.infoCardLabel}>Email:</Text>
+                <Text style={styles.infoCardValue}>{mockUser.email}</Text>
+                <Text style={styles.infoCardLabel}>Phone:</Text>
+                <Text style={styles.infoCardValue}>{mockUser.phone || 'Not set'}</Text>
+              </View>
+              {/* Location & Preferences */}
+              <View style={[styles.infoCard, { width: '100%', marginBottom: 14 }]}> 
+                <Text style={styles.infoCardTitle}>Location & Preferences</Text>
+                <Text style={styles.infoCardLabel}>Country:</Text>
+                <Text style={styles.infoCardValue}>{mockUser.country}</Text>
+                <Text style={styles.infoCardLabel}>Language:</Text>
+                <Text style={styles.infoCardValue}>{mockUser.language}</Text>
+              </View>
+              {/* Account Status */}
+              <View style={[styles.infoCard, { width: '100%', marginBottom: 14 }]}> 
+                <Text style={styles.infoCardTitle}>Account Status</Text>
+                <Text style={styles.infoCardLabel}>Verification Status:</Text>
+                <Text style={styles.infoCardValue}>{mockUser.verificationStatus}</Text>
+                <Text style={styles.infoCardLabel}>Member Since:</Text>
+                <Text style={styles.infoCardValue}>{mockUser.joinedDate}</Text>
+              </View>
+              {/* Time Settings */}
+              <View style={[styles.infoCard, { width: '100%' }]}> 
+                <Text style={styles.infoCardTitle}>Time Settings</Text>
+                <Text style={styles.infoCardLabel}>Timezone:</Text>
+                <Text style={styles.infoCardValue}>{mockUser.timezone}</Text>
+                <Text style={styles.infoCardLabel}>Last Updated:</Text>
+                <Text style={styles.infoCardValue}>Just now</Text>
+              </View>
+            </View>
+          </>
+        )}
+        {tab === 'security' && (
+          <View style={[styles.infoCard, { margin: 18, alignItems: 'center' }]}> 
+            <Text style={styles.infoCardTitle}>Security Settings</Text>
+            <Text style={styles.infoCardValue}>Change your password, enable 2FA, and manage security settings here.</Text>
+          </View>
+        )}
+        {tab === 'referral' && (
+          <View style={[styles.infoCard, { margin: 18, alignItems: 'center' }]}> 
+            <Text style={styles.infoCardTitle}>Referral Program</Text>
+            <Text style={styles.infoCardValue}>Invite friends and earn rewards! (Coming soon)</Text>
+          </View>
+        )}
       </ScrollView>
-      <BottomNavigation />
     </View>
   );
 };
@@ -144,59 +184,32 @@ const Profile = () => {
 const styles = StyleSheet.create({
   bg: {
     flex: 1,
-    backgroundColor: '#f6f8fa',
+    // backgroundColor moved to inline style
   },
   scroll: {
     flexGrow: 1,
     padding: 0,
     paddingBottom: 90,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 56,
-    paddingBottom: 16,
-    paddingHorizontal: 24,
-    backgroundColor: 'transparent',
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#10b981',
-  },
-  themeToggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e8fdf3',
-    borderRadius: 20,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-  },
-  themeToggleText: {
-    fontSize: 15,
-    color: '#10b981',
-    fontWeight: 'bold',
-  },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: 18,
     padding: 22,
     marginHorizontal: 18,
+    marginTop: 18,
     marginBottom: 18,
-    shadowColor: '#10b981',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 24,
-    elevation: 7,
+    shadowRadius: 4,
+    // backgroundColor moved to inline style
   },
   avatarCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#e8fdf3',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -211,68 +224,27 @@ const styles = StyleSheet.create({
     color: '#5c5e6b',
     marginTop: 2,
   },
-  menuList: {
-    marginHorizontal: 18,
-    marginBottom: 18,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+  infoCard: {
     borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    marginBottom: 10,
-    shadowColor: '#10b981',
-    shadowOpacity: 0.03,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  menuIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#e8fdf3',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#222',
-  },
-  menuDesc: {
-    fontSize: 13,
-    color: '#5c5e6b',
-    marginTop: 2,
-  },
-  logoutBtn: {
-    width: '90%',
-    alignSelf: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
+    padding: 18,
     marginBottom: 8,
-    borderWidth: 1.5,
-    borderColor: '#e11d48',
   },
-  logoutText: {
-    color: '#e11d48',
+  infoCardTitle: {
     fontWeight: 'bold',
     fontSize: 16,
+    color: '#10b981',
+    marginBottom: 6,
   },
-  versionText: {
-    color: '#a1a1aa',
+  infoCardLabel: {
+    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 2,
     fontSize: 13,
-    textAlign: 'center',
-    marginTop: 30,
-    marginBottom: 14,
+  },
+  infoCardValue: {
+    color: '#222',
+    fontSize: 14,
+    marginBottom: 4,
   },
 });
 

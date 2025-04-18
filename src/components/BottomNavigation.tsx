@@ -2,6 +2,7 @@ import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
   {
@@ -19,11 +20,7 @@ const navItems = [
     icon: "bar-chart-2",
     route: "Trade",
   },
-  {
-    name: "Transfer",
-    icon: "send",
-    route: "Transfer",
-  },
+
   {
     name: "Profile",
     icon: "user",
@@ -34,9 +31,15 @@ const navItems = [
 const BottomNavigation: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { theme } = useTheme();
+
+  const backgroundColor = theme.colors.background === '#101522' ? '#181c2f' : '#fff';
+  const borderTopColor = theme.colors.background === '#101522' ? '#22263a' : '#e5e7eb';
+  const inactiveColor = theme.colors.background === '#101522' ? '#a3aed6' : '#6b7280';
+  const activeColor = "#10b981";
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor, borderTopColor }] }>
       {navItems.map((item) => {
         const isActive = route.name === item.route;
         return (
@@ -48,9 +51,9 @@ const BottomNavigation: React.FC = () => {
             <Feather
               name={item.icon as any}
               size={22}
-              color={isActive ? "#10b981" : "#6b7280"}
+              color={isActive ? activeColor : inactiveColor}
             />
-            <Text style={[styles.label, isActive && styles.activeLabel]}>
+            <Text style={[styles.label, { color: isActive ? activeColor : inactiveColor }, isActive && styles.activeLabel]}>
               {item.name}
             </Text>
           </TouchableOpacity>

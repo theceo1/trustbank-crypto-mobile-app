@@ -1,10 +1,6 @@
-import React, { useState } from "react";
-import { useNavigation } from "@react-navigation/native";
-import { Feather } from '@expo/vector-icons';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, useColorScheme } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient';
-import Button from "@/components/ui/button";
-import BottomNavigation from "@/components/BottomNavigation";
+import { Feather } from '@expo/vector-icons';
 
 // ===== MOCK DATA FOR PRODUCTION UI =====
 const mockUser = { email: "john@doe.com" };
@@ -30,56 +26,18 @@ const quickLinks = [
   { label: 'P2P Trading', icon: 'users', subtitle: 'Trade with users' },
 ];
 
+import { SafeAreaView } from 'react-native';
+
 const Dashboard = () => {
-  const navigation = useNavigation();
-  const systemColorScheme = useColorScheme();
-  // Demo theme toggle: local state (replace with context/provider for app-wide theme)
-  const [theme, setTheme] = useState<'light' | 'dark'>(systemColorScheme === 'dark' ? 'dark' : 'light');
-  const isDark = theme === 'dark';
   const firstName = mockUser.email.split('@')[0] || "User";
 
-  // Card background helpers
-  const cardBg = (colors: string[]) => isDark ? colors.map(c => darken(c)) : colors;
-  function darken(hex: string) {
-    // Simple darken for demo
-    return hex.replace('#', '#1a');
-  }
-
-  // Theme toggle handler
-  const handleThemeToggle = () => setTheme(isDark ? 'light' : 'dark');
-
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#101112' : '#f8fafc' }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: isDark ? '#16181b' : '#fff', borderBottomColor: isDark ? '#222' : '#eee' }]}>
-        {/* Menu Button */}
-        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.openDrawer?.() || {}}>
-          <Feather name="menu" size={22} color={isDark ? '#fff' : '#1a237e'} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : '#1a237e', flex: 1, textAlign: 'center' }]}>Dashboard</Text>
-        {/* Theme Toggle Button */}
-        <TouchableOpacity style={styles.iconBtn} onPress={handleThemeToggle}>
-          {isDark ? (
-            <Feather name="sun" size={20} color="#fbbf24" />
-          ) : (
-            <Feather name="moon" size={20} color="#6366f1" />
-          )}
-        </TouchableOpacity>
-        {/* Notification Button */}
-        <Button
-          variant="outline"
-          style={styles.iconBtn}
-          onPress={() => navigation.navigate('Notifications' as never)}
-        >
-          <Feather name="bell" size={20} color={isDark ? '#fff' : '#1a237e'} />
-        </Button>
-      </View>
-
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Welcome & Info */}
         <View style={styles.section}>
-          <Text style={[styles.welcome, { color: isDark ? '#fff' : '#1a237e' }]}>Welcome back! {firstName}👋</Text>
-          <Text style={[styles.subtitle, { color: isDark ? '#cbd5e1' : '#64748b' }]}>Here's an overview of your account and quick actions.</Text>
+          <Text style={[styles.welcome, { color: '#1a237e' }]}>Welcome back! {firstName}👋</Text>
+          <Text style={[styles.subtitle, { color: '#64748b' }]}>Here's an overview of your account and quick actions.</Text>
         </View>
 
         {/* Overview Cards */}
@@ -122,14 +80,14 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <View style={styles.quickActionsBox}>
-          <Text style={[styles.quickActionsTitle, { color: isDark ? '#fff' : '#1a237e' }]}>Quick Actions</Text>
+          <Text style={[styles.quickActionsTitle, { color: '#1a237e' }]}>Quick Actions</Text>
           <View style={styles.quickActionsRow}>
             {quickActions.map((action, idx) => (
-              <TouchableOpacity key={action.label} style={[styles.quickAction, { backgroundColor: isDark ? '#18181b' : '#fff' }]} onPress={action.onPress}>
+              <TouchableOpacity key={action.label} style={[styles.quickAction, { backgroundColor: '#fff' }]} onPress={action.onPress}>
                 <LinearGradient colors={['#a7f3d0', '#34d399']} style={styles.quickActionIconBox}>
                   <Feather name={action.icon as any} size={22} color="#fff" />
                 </LinearGradient>
-                <Text style={[styles.quickActionLabel, { color: isDark ? '#fff' : '#1a237e' }]}>{action.label}</Text>
+                <Text style={[styles.quickActionLabel, { color: '#1a237e' }]}>{action.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -138,28 +96,28 @@ const Dashboard = () => {
         {/* Quick Links & Recent Transactions */}
         <View style={styles.linksRow}>
           <View style={styles.linksCol}>
-            <Text style={[styles.quickLinksTitle, { color: isDark ? '#fff' : '#1a237e' }]}>Quick Links</Text>
+            <Text style={[styles.quickLinksTitle, { color: '#1a237e' }]}>Quick Links</Text>
             {quickLinks.map(link => (
-              <TouchableOpacity key={link.label} style={[styles.quickLink, { borderColor: isDark ? '#444' : '#d1d5db', backgroundColor: isDark ? '#18181b' : '#fff' }]}>
-                <Feather name={link.icon as any} size={18} color={isDark ? '#818cf8' : '#6366f1'} style={{ marginRight: 10 }} />
+              <TouchableOpacity key={link.label} style={[styles.quickLink, { borderColor: '#d1d5db', backgroundColor: '#fff' }]}>
+                <Feather name={link.icon as any} size={18} color="#6366f1" style={{ marginRight: 10 }} />
                 <View>
-                  <Text style={[styles.quickLinkLabel, { color: isDark ? '#fff' : '#1a237e' }]}>{link.label}</Text>
-                  <Text style={[styles.quickLinkSub, { color: isDark ? '#cbd5e1' : '#64748b' }]}>{link.subtitle}</Text>
+                  <Text style={[styles.quickLinkLabel, { color: '#1a237e' }]}>{link.label}</Text>
+                  <Text style={[styles.quickLinkSub, { color: '#64748b' }]}>{link.subtitle}</Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
           <View style={styles.transactionsCol}>
             <View style={styles.transactionsHeader}>
-              <Text style={[styles.transactionsTitle, { color: isDark ? '#fff' : '#1a237e' }]}>Recent Transactions</Text>
+              <Text style={[styles.transactionsTitle, { color: '#1a237e' }]}>Recent Transactions</Text>
               <TouchableOpacity><Text style={styles.transactionsViewAll}>View All <Feather name="chevron-right" size={13} /></Text></TouchableOpacity>
             </View>
-            <View style={[styles.transactionsList, { backgroundColor: isDark ? '#18181b' : '#fff' }]}>
+            <View style={[styles.transactionsList, { backgroundColor: '#fff' }]}>
               {recentTransactions.map(tx => (
                 <View key={tx.id} style={styles.transactionItem}>
                   <Feather name={tx.type === 'swap' ? 'repeat' : 'bar-chart-2'} size={18} color={tx.type === 'swap' ? '#6366f1' : '#a21caf'} style={{ marginRight: 10 }} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.transactionLabel, { color: isDark ? '#fff' : '#1a237e' }]}>{tx.type === 'swap' ? 'Swap' : 'Trade'}</Text>
+                    <Text style={[styles.transactionLabel, { color: '#1a237e' }]}>{tx.type === 'swap' ? 'Swap' : 'Trade'}</Text>
                     <Text style={styles.transactionDate}>{tx.createdAt}</Text>
                   </View>
                   <Text style={[styles.transactionAmount, { color: tx.type === 'swap' ? '#6366f1' : '#a21caf' }]}>+{tx.amount} {tx.currency}</Text>
@@ -172,7 +130,6 @@ const Dashboard = () => {
         {/* Spacer for bottom nav */}
         <View style={{ height: 90 }} />
       </ScrollView>
-      <BottomNavigation />
     </View>
   );
 };
@@ -180,16 +137,6 @@ const Dashboard = () => {
 // ===== STYLES =====
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 56,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-  },
-  headerTitle: { fontSize: 20, fontWeight: '600' },
   iconBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
   scrollContent: { paddingBottom: 80 },
   section: { paddingHorizontal: 20, marginBottom: 18 },
