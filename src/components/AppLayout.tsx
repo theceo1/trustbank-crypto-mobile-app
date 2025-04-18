@@ -92,6 +92,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Feather name="globe" size={18} color={isActive('Mission') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
               <Text style={[styles.menuItemText, isActive('Mission') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Mission</Text>
             </TouchableOpacity>
+            {/* Vision */}
+            <TouchableOpacity
+              style={[styles.menuItem, isActive('Vision') && { backgroundColor: '#059669' }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowMenu(false);
+                if (!isActive('Vision')) navigation.navigate('Vision');
+              }}
+            >
+              <Feather name="eye" size={18} color={isActive('Vision') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+              <Text style={[styles.menuItemText, isActive('Vision') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Vision</Text>
+            </TouchableOpacity>
             {/* Blog */}
             <TouchableOpacity
               style={[styles.menuItem, isActive('Blog') && { backgroundColor: '#059669' }]}
@@ -194,6 +206,42 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               >
                 <Feather name="globe" size={18} color={isActive('Mission') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
                 <Text style={[styles.menuItemText, isActive('Mission') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Mission</Text>
+              </TouchableOpacity>
+              {/* Vision */}
+              <TouchableOpacity
+                style={[styles.menuItem, isActive('Vision') && { backgroundColor: '#059669' }]}
+                activeOpacity={0.85}
+                onPress={() => {
+                  setShowMenu(false);
+                  if (!isActive('Vision')) navigation.navigate('Vision');
+                }}
+              >
+                <Feather name="eye" size={18} color={isActive('Vision') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+                <Text style={[styles.menuItemText, isActive('Vision') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Vision</Text>
+              </TouchableOpacity>
+              {/* FAQ */}
+              <TouchableOpacity
+                style={[styles.menuItem, isActive('FAQ') && { backgroundColor: '#059669' }]}
+                activeOpacity={0.85}
+                onPress={() => {
+                  setShowMenu(false);
+                  if (!isActive('FAQ')) navigation.navigate('FAQ');
+                }}
+              >
+                <Feather name="help-circle" size={18} color={isActive('FAQ') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+                <Text style={[styles.menuItemText, isActive('FAQ') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>FAQ</Text>
+              </TouchableOpacity>
+              {/* Contact */}
+              <TouchableOpacity
+                style={[styles.menuItem, isActive('Contact') && { backgroundColor: '#059669' }]}
+                activeOpacity={0.85}
+                onPress={() => {
+                  setShowMenu(false);
+                  if (!isActive('Contact')) navigation.navigate('Contact');
+                }}
+              >
+                <Feather name="mail" size={18} color={isActive('Contact') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+                <Text style={[styles.menuItemText, isActive('Contact') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Contact</Text>
               </TouchableOpacity>
               {/* Blog */}
               <TouchableOpacity

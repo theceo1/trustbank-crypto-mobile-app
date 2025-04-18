@@ -13,6 +13,7 @@ export type Theme = {
     text: string;
     secondaryText: string;
     primary: string;
+    brandGreen: string; // trustBank brand green
     // Add any other keys needed by your UI
   };
 };
@@ -30,6 +31,7 @@ const lightTheme: Theme = {
     text: '#1a237e',
     secondaryText: '#64748b',
     primary: '#03a9f4',
+    brandGreen: '#059669', // trustBank brand green
   }
 };
 
@@ -41,6 +43,7 @@ const darkTheme: Theme = {
     text: '#f8fafc',
     secondaryText: '#a3a3a3',
     primary: '#03a9f4',
+    brandGreen: '#059669', // trustBank brand green
   }
 };
 

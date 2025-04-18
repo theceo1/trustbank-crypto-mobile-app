@@ -25,6 +25,9 @@ import MissionPage from './pages/MissionPage';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import TradeGuidePage from './pages/TradeGuidePage';
+import VisionScreen from './pages/Vision';
+import FAQScreen from './pages/FAQ';
+import ContactScreen from './pages/Contact';
 import AppLayout from './components/AppLayout';
 
 const Stack = createNativeStackNavigator();
@@ -55,6 +58,9 @@ const App = () => (
               <Stack.Screen name="Mission" children={() => <AppLayout><MissionPage /></AppLayout>} />
               <Stack.Screen name="Profile" children={() => <AppLayout><Profile /></AppLayout>} />
               <Stack.Screen name="TradeGuide" children={() => <AppLayout><TradeGuidePage /></AppLayout>} />
+              <Stack.Screen name="Vision" children={() => <AppLayout><VisionScreen /></AppLayout>} />
+              <Stack.Screen name="FAQ" children={() => <AppLayout><FAQScreen /></AppLayout>} />
+              <Stack.Screen name="Contact" children={() => <AppLayout><ContactScreen /></AppLayout>} />
               <Stack.Screen name="NotFound" children={() => <AppLayout><NotFound /></AppLayout>} />
             </Stack.Navigator>
           </NavigationContainer>

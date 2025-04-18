@@ -1,503 +1,420 @@
-import React, { useState, useEffect } from "react";
-import { useNavigation, useTheme } from "@react-navigation/native";
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Modal, Platform } from 'react-native';
+import WheelPickerExpo from 'react-native-wheel-picker-expo';
+import { useTheme } from '@/contexts/ThemeContext';
 
-import Button from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { ScrollView, TextInput, View, Text, Image, StyleSheet } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+const CRYPTOS = [
+  { label: 'Bitcoin', value: 'BTC' },
+  { label: 'Ethereum', value: 'ETH' },
+  { label: 'Tether', value: 'USDT' },
+];
+const FIATS = [
+  { label: 'Naira', value: 'NGN' },
+  { label: 'US Dollar', value: 'USD' },
+  { label: 'Pound', value: 'GBP' },
+];
 
-// Mock exchange rates for crypto currencies
-const exchangeRates = {
-  BTC: { USD: 61245.32, EUR: 56423.18, GBP: 48123.45 },
-  ETH: { USD: 3998.75, EUR: 3682.14, GBP: 3142.57 },
-  SOL: { USD: 132.56, EUR: 122.03, GBP: 103.95 },
-  ADA: { USD: 0.45, EUR: 0.41, GBP: 0.35 },
-  XRP: { USD: 0.65, EUR: 0.60, GBP: 0.51 },
-  DOT: { USD: 7.82, EUR: 7.20, GBP: 6.13 },
-  BNB: { USD: 634.21, EUR: 583.92, GBP: 497.36 },
-};
+function CryptoConverter() {
+  const { theme } = useTheme();
+  const [crypto, setCrypto] = React.useState('BTC');
+  const [fiat, setFiat] = React.useState('NGN');
+  const [amount, setAmount] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [showCryptoWheel, setShowCryptoWheel] = useState(false);
+  const [showFiatWheel, setShowFiatWheel] = useState(false);
 
-const cryptoIcons = {
-  BTC: "https://cryptologos.cc/logos/bitcoin-btc-logo.png",
-  ETH: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  SOL: "https://cryptologos.cc/logos/solana-sol-logo.png",
-  ADA: "https://cryptologos.cc/logos/cardano-ada-logo.png",
-  XRP: "https://cryptologos.cc/logos/xrp-xrp-logo.png",
-  DOT: "https://cryptologos.cc/logos/polkadot-new-dot-logo.png",
-  BNB: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-};
+  const handleConvert = async () => {
+    setLoading(true);
+    setResult(null);
+    setError(null);
+    try {
+      const market = `${crypto.toLowerCase()}${fiat.toLowerCase()}`;
+      const url = `https://www.quidax.com/api/v1/markets/tickers/${market}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch rate');
+      const data = await res.json();
+      const price = parseFloat(data?.data?.ticker?.last);
+      const amt = parseFloat(amount);
+      if (isNaN(price) || isNaN(amt)) throw new Error('Invalid input');
+      setResult(`${amt} ${crypto} ≈ ${(amt * price).toLocaleString()} ${fiat}`);
+    } catch (e: any) {
+      setError(e.message || 'Conversion failed');
+    }
+    setLoading(false);
+  };
+
+
+  return (
+    <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.primary }]}>  
+      <Text style={{ textAlign: 'center', marginBottom: 2 }}>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.colors.text }}>trust</Text>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.colors.primary }}>Rate™</Text>
+      </Text>
+      <Text style={[styles.sectionSubtitle, { color: theme.colors.text }]}>Convert crypto to fiat instantly with live rates</Text>
+      {/* Selectors */}
+      <View style={styles.selectorRow}>
+        {/* Crypto Selector */}
+        <TouchableOpacity style={styles.selectorBtn} onPress={() => setShowCryptoWheel(true)}>
+          <Text style={[styles.selectorLabel, { color: theme.colors.text }]}>Crypto</Text>
+          <Text style={[styles.selectorValue, { color: theme.colors.primary }]}>{crypto}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.selectorBtn} onPress={() => setShowFiatWheel(true)}>
+          <Text style={[styles.selectorLabel, { color: theme.colors.text }]}>Fiat</Text>
+          <Text style={[styles.selectorValue, { color: theme.colors.primary }]}>{fiat}</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Wheel Pickers */}
+      <Modal visible={showCryptoWheel} transparent animationType="slide" onRequestClose={() => setShowCryptoWheel(false)}>
+        <View style={[styles.wheelModalBg, {backgroundColor: 'transparent'}]}>
+          <View style={[styles.wheelModalContent, {backgroundColor: theme.colors.card, shadowOpacity: 0.15}]}> 
+            <Text style={[styles.wheelTitle, { color: theme.colors.primary }]}>Select Crypto</Text>
+            <WheelPickerExpo
+              height={220}
+              width={240}
+              initialSelectedIndex={CRYPTOS.findIndex(c => c.value === crypto)}
+              items={CRYPTOS.map(opt => ({ label: opt.label, value: opt.value }))}
+              onChange={({ item }) => setCrypto(item.value)}
+              backgroundColor={Platform.OS === 'android' ? 'transparent' : theme.colors.card}
+              selectedStyle={{ color: theme.colors.primary, fontWeight: 'bold' }}
+              itemStyle={{ color: theme.colors.text, fontSize: 18 }}
+            />
+            <TouchableOpacity style={styles.wheelDoneBtn} onPress={() => setShowCryptoWheel(false)}>
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={showFiatWheel} transparent animationType="slide" onRequestClose={() => setShowFiatWheel(false)}>
+        <View style={[styles.wheelModalBg, {backgroundColor: 'transparent'}]}>
+          <View style={[styles.wheelModalContent, {backgroundColor: theme.colors.card, shadowOpacity: 0.15}]}> 
+            <Text style={[styles.wheelTitle, { color: theme.colors.primary }]}>Select Fiat</Text>
+            <WheelPickerExpo
+              height={220}
+              width={240}
+              initialSelectedIndex={FIATS.findIndex(f => f.value === fiat)}
+              items={FIATS.map(opt => ({ label: opt.label, value: opt.value }))}
+              onChange={({ item }) => setFiat(item.value)}
+              backgroundColor={Platform.OS === 'android' ? 'transparent' : theme.colors.card}
+              selectedStyle={{ color: theme.colors.primary, fontWeight: 'bold' }}
+              itemStyle={{ color: theme.colors.text, fontSize: 18 }}
+            />
+            <TouchableOpacity style={styles.wheelDoneBtn} onPress={() => setShowFiatWheel(false)}>
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* Amount Input */}
+      <TextInput
+        style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text, borderColor: theme.colors.border }]}
+        placeholder="Amount"
+        placeholderTextColor={theme.colors.secondaryText || '#aaa'}
+        keyboardType="decimal-pad"
+        value={amount}
+        onChangeText={setAmount}
+      />
+      <TouchableOpacity style={[styles.convertBtn, { backgroundColor: theme.colors.primary }]} onPress={handleConvert} disabled={loading || !amount}>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.convertBtnText}>Convert</Text>
+        )}
+      </TouchableOpacity>
+      {result && <Text style={[styles.resultText, { color: theme.colors.primary }]}>{result}</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
+}
+
+const TAB_CONVERTER = 'Crypto Converter';
+const TAB_CALCULATOR = 'Calculator';
 
 const CalculatorPage = () => {
-  const { colors } = useTheme();
-  const navigation = useNavigation();
-  const { toast } = useToast();
+  const { theme } = useTheme();
+  const [activeTab, setActiveTab] = useState(TAB_CALCULATOR);
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background || '#fff',
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 18,
-      paddingTop: 24,
-      paddingBottom: 18,
-      backgroundColor: colors.card || '#fff',
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border || '#e5e7eb',
-    },
-    headerLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerIconBtn: {
-      marginRight: 10,
-      borderRadius: 8,
-      borderColor: colors.border || '#e5e7eb',
-      borderWidth: 1,
-      backgroundColor: colors.background || '#f8fafc',
-      padding: 4,
-    },
-    headerTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: colors.text || '#1a237e',
-    },
-    headerRight: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    content: {
-      flex: 1,
-      padding: 18,
-    },
-    tabsList: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 18,
-    },
-    tabBtn: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 10,
-      borderRadius: 8,
-      borderColor: colors.border || '#e5e7eb',
-      borderWidth: 1,
-      backgroundColor: colors.background || '#f8fafc',
-    },
-    tabBtnActive: {
-      backgroundColor: colors.primary || '#03a9f4',
-      borderColor: colors.primary || '#03a9f4',
-    },
-    tabText: {
-      fontSize: 16,
-      color: colors.text || '#1a237e',
-    },
-    card: {
-      padding: 18,
-      borderRadius: 8,
-      backgroundColor: colors.card || '#fff',
-      borderColor: colors.border || '#e5e7eb',
-      borderWidth: 1,
-    },
-    displayBox: {
-      marginBottom: 18,
-    },
-    displayText: {
-      fontSize: 48,
-      fontWeight: '700',
-      color: colors.text || '#1a237e',
-    },
-    displaySubText: {
-      fontSize: 16,
-      color: colors.text || '#1a237e',
-    },
-    keypadGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    },
-    keyBtn: {
-      width: '25%',
-      aspectRatio: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 10,
-      borderRadius: 8,
-      borderColor: colors.border || '#e5e7eb',
-      borderWidth: 1,
-      backgroundColor: colors.background || '#f8fafc',
-    },
-    keyBtnOp: {
-      backgroundColor: colors.primary || '#03a9f4',
-      borderColor: colors.primary || '#03a9f4',
-    },
-    keyBtnDouble: {
-      width: '50%',
-    },
-    keyBtnText: {
-      fontSize: 24,
-      color: colors.text || '#1a237e',
-    },
-    // Converter styles
-    converterSection: {
-      marginTop: 8,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors.text || '#1a237e',
-      marginBottom: 4,
-    },
-    pickerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 8,
-    },
-    cryptoIcon: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      marginRight: 8,
-      backgroundColor: colors.card || '#fff',
-    },
-    picker: {
-      flex: 1,
-      color: colors.text || '#1a237e',
-      backgroundColor: colors.card || '#fff',
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border || '#e5e7eb',
-      borderRadius: 8,
-      padding: 10,
-      fontSize: 18,
-      color: colors.text || '#1a237e',
-      backgroundColor: colors.background || '#f8fafc',
-      marginBottom: 8,
-    },
-    swapRow: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginVertical: 8,
-    },
-    swapBtn: {
-      borderRadius: 24,
-      padding: 8,
-      backgroundColor: colors.primary || '#03a9f4',
-    },
-    exchangeRateBox: {
-      marginTop: 8,
-      padding: 8,
-      backgroundColor: colors.background || '#f8fafc',
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border || '#e5e7eb',
-    },
-    exchangeRateLabel: {
-      fontSize: 14,
-      color: colors.text || '#1a237e',
-      marginBottom: 2,
-    },
-    exchangeRateText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors.text || '#1a237e',
-    },
-    converterNoteBox: {
-      marginTop: 8,
-      alignItems: 'flex-start',
-    },
-    noteText: {
-      fontSize: 13,
-      color: colors.text || '#64748b',
-    },
-  });
+  // Calculator logic
+  const [calcInput, setCalcInput] = useState('');
+  const [calcResult, setCalcResult] = useState('');
 
-  // Calculator state
-  const [display, setDisplay] = useState("0");
-  const [previousValue, setPreviousValue] = useState<number | null>(null);
-  const [operation, setOperation] = useState<string | null>(null);
-  const [waitingForOperand, setWaitingForOperand] = useState(false);
-  
-  // Converter state
-  const [fromCrypto, setFromCrypto] = useState("BTC");
-  const [toCrypto, setToCrypto] = useState("USD");
-  const [fromAmount, setFromAmount] = useState("1");
-  const [toAmount, setToAmount] = useState("");
-  
-  // Tab state for switching between calculator and converter
-  const [displayTab, setDisplayTab] = useState<'calculator' | 'converter'>('calculator');
-
-  // Calculate conversion
-  useEffect(() => {
-    if (fromCrypto in exchangeRates && toCrypto in exchangeRates[fromCrypto as keyof typeof exchangeRates]) {
-      const rate = exchangeRates[fromCrypto as keyof typeof exchangeRates][toCrypto as keyof typeof exchangeRates[keyof typeof exchangeRates]];
-      setToAmount((parseFloat(fromAmount || "0") * rate).toFixed(2));
-    } else if (toCrypto in exchangeRates && fromCrypto in exchangeRates[toCrypto as keyof typeof exchangeRates]) {
-      const rate = exchangeRates[toCrypto as keyof typeof exchangeRates][fromCrypto as keyof typeof exchangeRates[keyof typeof exchangeRates]];
-      setToAmount((parseFloat(fromAmount || "0") / rate).toFixed(8));
-    } else {
-      setToAmount("Conversion not available");
+  const handleCalcPress = (btn: string) => {
+    if (btn === 'C') {
+      setCalcInput('');
+      setCalcResult('');
+      return;
     }
-  }, [fromCrypto, toCrypto, fromAmount]);
-
-  // Calculator functions
-  const inputDigit = (digit: string) => {
-    if (waitingForOperand) {
-      setDisplay(digit);
-      setWaitingForOperand(false);
-    } else {
-      setDisplay(display === "0" ? digit : display + digit);
-    }
-  };
-
-  const inputDot = () => {
-    if (waitingForOperand) {
-      setDisplay("0.");
-      setWaitingForOperand(false);
-    } else if (display.indexOf(".") === -1) {
-      setDisplay(display + ".");
-    }
-  };
-
-  const clearDisplay = () => {
-    setDisplay("0");
-    setPreviousValue(null);
-    setOperation(null);
-    setWaitingForOperand(false);
-  };
-
-  const performOperation = (nextOperation: string) => {
-    const inputValue = parseFloat(display);
-    
-    if (previousValue === null) {
-      setPreviousValue(inputValue);
-    } else if (operation) {
-      const result = calculate(previousValue, inputValue, operation);
-      if (typeof result === 'number') {
-        setPreviousValue(result);
-        setDisplay(String(result));
-      } else {
-        setPreviousValue(null);
-        setDisplay(result);
+    if (btn === '%') {
+      // Find the last number in the input and convert it to percent
+      const match = calcInput.match(/(\d*\.?\d*)$/);
+      if (match && match[0]) {
+        const percent = (parseFloat(match[0]) / 100).toString();
+        setCalcInput(calcInput.replace(/(\d*\.?\d*)$/, percent));
       }
+      return;
     }
-    
-    setWaitingForOperand(true);
-    setOperation(nextOperation);
-  };
-
-  const calculate = (a: number, b: number, op: string) => {
-    switch (op) {
-      case "+":
-        return a + b;
-      case "-":
-        return a - b;
-      case "×":
-        return a * b;
-      case "÷":
-        return b !== 0 ? a / b : "Error";
-      default:
-        return b;
+    if (btn === '=') {
+      try {
+        // Replace × and ÷ with * and /
+        const safeExpr = calcInput.replace(/×/g, '*').replace(/÷/g, '/');
+        // eslint-disable-next-line no-eval
+        let evalResult = eval(safeExpr);
+        if (typeof evalResult === 'number' && !isNaN(evalResult)) {
+          setCalcResult(evalResult.toString());
+        } else {
+          setCalcResult('Err');
+        }
+      } catch {
+        setCalcResult('Err');
+      }
+      return;
     }
-  };
-
-  const handleEquals = () => {
-    const inputValue = parseFloat(display);
-    
-    if (previousValue !== null && operation) {
-      const result = calculate(previousValue, inputValue, operation);
-      setDisplay(String(result));
-      setPreviousValue(null);
-      setOperation(null);
-      setWaitingForOperand(true);
+    // Prevent multiple decimals in a number
+    if (btn === '.' && /\d*\.?\d*$/.test(calcInput.split(/[-+×÷]/).pop() || '')) {
+      if ((calcInput.split(/[-+×÷]/).pop() || '').includes('.')) return;
     }
-  };
-
-  const handlePercentage = () => {
-    const value = parseFloat(display);
-    setDisplay(String(value / 100));
-  };
-
-  const toggleSign = () => {
-    setDisplay(display.charAt(0) === "-" ? display.substr(1) : "-" + display);
-  };
-
-  // Save calculation to history
-  const saveCalculation = () => {
-    toast({
-      title: "Calculation saved",
-      description: "The current calculation has been saved to history",
-    });
+    // Prevent leading operator
+    if (calcInput === '' && ['+','-','×','÷'].includes(btn)) return;
+    // Prevent two operators in a row
+    if (['+','-','×','÷'].includes(btn) && ['+','-','×','÷'].includes(calcInput.slice(-1))) return;
+    setCalcInput(prev => prev + btn);
+    setCalcResult('');
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Button
-            variant="outline"
-            style={styles.headerIconBtn}
-            onPress={() => navigation.navigate("Dashboard" as never)}
-          >
-            <Text style={{fontSize: 22}}>{'<'} </Text>
-          </Button>
-          <Text style={styles.headerTitle}>Calculator</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <Button variant="outline" style={styles.headerIconBtn} onPress={saveCalculation}>
-            <Text style={{fontSize: 20}}>💾</Text>
-          </Button>
-        </View>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      {/* Page Title & Subtitle */}
+      <View style={{ paddingTop: 36, paddingHorizontal: 24, paddingBottom: 16 }}>
+        <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.colors.primary, marginBottom: 4 }}>Calculator</Text>
+        <Text style={{ fontSize: 16, color: theme.colors.secondaryText || theme.colors.text, marginBottom: 10 }}>
+          Simple calculator and crypto converter with live rates
+        </Text>
       </View>
-
-      {/* Main Content */}
-      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1 }}>
-        {/* Tabs - custom for mobile */}
-        <View style={styles.tabsList}>
-          <Button
-            variant={displayTab === 'calculator' ? 'primary' : 'outline'}
-            style={[styles.tabBtn, displayTab === 'calculator' && styles.tabBtnActive]}
-            onPress={() => setDisplayTab('calculator')}
+      {/* Tab Header */}
+      <View style={styles.tabBar}>
+        {[TAB_CONVERTER, TAB_CALCULATOR].map(tab => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
+            onPress={() => setActiveTab(tab)}
           >
-            <Text style={styles.tabText}>Calculator</Text>
-          </Button>
-          <Button
-            variant={displayTab === 'converter' ? 'primary' : 'outline'}
-            style={[styles.tabBtn, displayTab === 'converter' && styles.tabBtnActive]}
-            onPress={() => setDisplayTab('converter')}
-          >
-            <Text style={styles.tabText}>Crypto Converter</Text>
-          </Button>
-        </View>
-
-        {/* Calculator Tab */}
-        {displayTab === 'calculator' && (
-          <Card style={styles.card}>
-            <View style={styles.displayBox}>
-              <Text style={styles.displayText}>{display}</Text>
-              {operation && previousValue !== null && (
-                <Text style={styles.displaySubText}>
-                  {previousValue} {operation}
-                </Text>
-              )}
+            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {/* Tab Content */}
+      <View style={{ flex: 1, padding: 24 }}>
+        {/* Calculator state and logic */}
+        {activeTab === TAB_CONVERTER ? (
+          <>
+            <CryptoConverter />
+            <View style={{ marginTop: 8, backgroundColor: 'transparent' }}>
+              <Text style={{ fontWeight: '600', color: theme.colors.text, marginBottom: 2 }}>Note:</Text>
+              <Text style={{ color: theme.colors.text, opacity: 0.8 }}>
+                The conversion results shown are estimates. Actual rates may vary slightly at the time of transaction due to market volatility and network conditions.
+              </Text>
             </View>
-            <View style={styles.keypadGrid}>
-              {/* First row */}
-              <Button variant="outline" style={styles.keyBtn} onPress={clearDisplay}><Text style={styles.keyBtnText}>C</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={toggleSign}><Text style={styles.keyBtnText}>+/-</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={handlePercentage}><Text style={styles.keyBtnText}>%</Text></Button>
-              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={() => performOperation('÷')}><Text style={styles.keyBtnText}>÷</Text></Button>
-              {/* Second row */}
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('7')}><Text style={styles.keyBtnText}>7</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('8')}><Text style={styles.keyBtnText}>8</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('9')}><Text style={styles.keyBtnText}>9</Text></Button>
-              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={() => performOperation('×')}><Text style={styles.keyBtnText}>×</Text></Button>
-              {/* Third row */}
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('4')}><Text style={styles.keyBtnText}>4</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('5')}><Text style={styles.keyBtnText}>5</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('6')}><Text style={styles.keyBtnText}>6</Text></Button>
-              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={() => performOperation('-')}><Text style={styles.keyBtnText}>-</Text></Button>
-              {/* Fourth row */}
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('1')}><Text style={styles.keyBtnText}>1</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('2')}><Text style={styles.keyBtnText}>2</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={() => inputDigit('3')}><Text style={styles.keyBtnText}>3</Text></Button>
-              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={() => performOperation('+')}><Text style={styles.keyBtnText}>+</Text></Button>
-              {/* Fifth row */}
-              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnDouble]} onPress={() => inputDigit('0')}><Text style={styles.keyBtnText}>0</Text></Button>
-              <Button variant="outline" style={styles.keyBtn} onPress={inputDot}><Text style={styles.keyBtnText}>.</Text></Button>
-              <Button variant="outline" style={[styles.keyBtn, styles.keyBtnOp]} onPress={handleEquals}><Text style={styles.keyBtnText}>=</Text></Button>
+          </>
+        ) : (
+          <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.primary, justifyContent: 'flex-start', alignItems: 'stretch', minHeight: 320, paddingHorizontal: 12 }]}> 
+            <Text style={{ color: theme.colors.primary, fontSize: 22, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' }}>Calculator</Text>
+            {/* Calculator Display */}
+            <View style={{ backgroundColor: theme.colors.background, borderRadius: 8, padding: 16, marginBottom: 18, minHeight: 60 }}>
+              <Text style={{ fontSize: 26, color: theme.colors.text, textAlign: 'right', minHeight: 32 }}>{calcInput || '0'}</Text>
+              <Text style={{ fontSize: 18, color: theme.colors.secondaryText, textAlign: 'right', minHeight: 22 }}>{calcResult !== '' ? `= ${calcResult}` : ''}</Text>
             </View>
-          </Card>
+            {/* Calculator Buttons */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+              {/* Calculator Buttons Grid */}
+<View style={{ width: '100%' }}>
+  {/* First 3 rows: 4 buttons each */}
+  {[
+    ['7','8','9','÷'],
+    ['4','5','6','×'],
+    ['1','2','3','-'],
+  ].map((row, ridx) => (
+    <View key={ridx} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+      {row.map((btn) => (
+        <TouchableOpacity
+          key={btn}
+          onPress={() => handleCalcPress(btn)}
+          style={{
+            flex: 1,
+            aspectRatio: 1,
+            marginHorizontal: 4,
+            backgroundColor: theme.colors.card,
+            borderRadius: 10,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 24, color: theme.colors.text, fontWeight: 'bold' }}>{btn}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  ))}
+  {/* Last row: %, 0, ., =, C */}
+  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+    {['%','0','.','=','C'].map((btn) => (
+      <TouchableOpacity
+        key={btn}
+        onPress={() => handleCalcPress(btn)}
+        style={{
+          flex: 1,
+          aspectRatio: 1,
+          marginHorizontal: 4,
+          backgroundColor:
+            btn === '=' ? '#16a34a' : btn === 'C' ? '#ef4444' : theme.colors.card,
+          borderRadius: 10,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: btn === '=' ? '#16a34a' : undefined,
+          shadowOpacity: btn === '=' ? 0.12 : 0,
+          elevation: btn === '=' ? 2 : 0,
+        }}
+      >
+        <Text style={{ fontSize: 24, color: btn === '=' || btn === 'C' ? '#fff' : theme.colors.text, fontWeight: 'bold' }}>{btn}</Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+</View>
+            </View>
+          </View>
         )}
-
-        {/* Converter Tab */}
-        {displayTab === 'converter' && (
-          <Card style={styles.card}>
-            <View style={styles.converterSection}>
-              {/* From Currency */}
-              <Text style={styles.label}>From</Text>
-              <View style={styles.pickerRow}>
-                <Image source={{ uri: cryptoIcons[fromCrypto] }} style={styles.cryptoIcon} />
-                <Picker
-                  selectedValue={fromCrypto}
-                  style={styles.picker}
-                  onValueChange={setFromCrypto}
-                >
-                  {Object.keys(exchangeRates).map(currency => (
-                    <Picker.Item key={currency} label={currency} value={currency} />
-                  ))}
-                  <Picker.Item label="USD" value="USD" />
-                  <Picker.Item label="EUR" value="EUR" />
-                  <Picker.Item label="GBP" value="GBP" />
-                </Picker>
-              </View>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={fromAmount}
-                onChangeText={setFromAmount}
-              />
-              {/* Swap button */}
-              <View style={styles.swapRow}>
-                <Button variant="outline" style={styles.swapBtn} onPress={() => {
-                  const temp = fromCrypto;
-                  setFromCrypto(toCrypto);
-                  setToCrypto(temp);
-                  setFromAmount(toAmount);
-                }}>
-                  <Text style={{fontSize: 20}}>🔄</Text>
-                </Button>
-              </View>
-              {/* To Currency */}
-              <Text style={styles.label}>To</Text>
-              <View style={styles.pickerRow}>
-                <Image source={{ uri: cryptoIcons[toCrypto] }} style={styles.cryptoIcon} />
-                <Picker
-                  selectedValue={toCrypto}
-                  style={styles.picker}
-                  onValueChange={setToCrypto}
-                >
-                  {Object.keys(exchangeRates).map(currency => (
-                    <Picker.Item key={currency} label={currency} value={currency} />
-                  ))}
-                  <Picker.Item label="USD" value="USD" />
-                  <Picker.Item label="EUR" value="EUR" />
-                  <Picker.Item label="GBP" value="GBP" />
-                </Picker>
-              </View>
-              <TextInput
-                style={styles.input}
-                value={toAmount}
-                editable={false}
-              />
-              <View style={styles.exchangeRateBox}>
-                <Text style={styles.exchangeRateLabel}>Exchange Rate</Text>
-                <Text style={styles.exchangeRateText}>
-                  1 {fromCrypto} = {
-                    fromCrypto in exchangeRates &&
-                    toCrypto in exchangeRates[fromCrypto as keyof typeof exchangeRates] ?
-                      exchangeRates[fromCrypto as keyof typeof exchangeRates][toCrypto as keyof typeof exchangeRates[keyof typeof exchangeRates]].toFixed(2) :
-                      "N/A"
-                  } {toCrypto}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.converterNoteBox}>
-              <Text style={styles.noteText}>• Exchange rates updated as of April 14, 2025</Text>
-            </View>
-          </Card>
-        )}
-      </ScrollView>
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: 18,
+    borderWidth: 2,
+    padding: 22,
+    marginVertical: 16,
+    shadowColor: '#16a34a',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  sectionSubtitle: {
+    fontSize: 15,
+    marginBottom: 18,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  selectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  selectorBtn: {
+    flex: 1,
+    marginHorizontal: 6,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    elevation: 1,
+  },
+  selectorLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    opacity: 0.7,
+  },
+  selectorValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  wheelModalBg: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.32)',
+    justifyContent: 'flex-end',
+  },
+  wheelModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    padding: 20,
+    alignItems: 'center',
+  },
+  wheelTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  wheelDoneBtn: {
+    backgroundColor: '#16a34a',
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 36,
+    borderRadius: 8,
+  },
+  input: {
+    width: 180,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 18,
+    textAlign: 'center',
+  },
+  convertBtn: {
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  convertBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 17,
+  },
+  resultText: {
+    marginTop: 18,
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  errorText: {
+    color: '#ff5252',
+    marginTop: 18,
+    textAlign: 'center',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#f1f5f9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 18,
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  tabButtonActive: {
+    borderBottomColor: '#16a34a',
+    backgroundColor: '#e0fbea',
+  },
+  tabText: {
+    color: '#64748b',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  tabTextActive: {
+    color: '#16a34a',
+  },
+});
 
 export default CalculatorPage;

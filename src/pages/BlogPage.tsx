@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, Image, ScrollView, TouchableOpacity, useColorScheme } from "react-native";
+import { View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
+import { useTheme } from '@/contexts/ThemeContext';
 
 const blogPosts = [
   {
@@ -81,16 +82,16 @@ export default function BlogPage({ navigation }: any) {
         </Text>
 
         {/* Featured Post */}
-        <View style={{ backgroundColor: isDark ? '#1e293b' : '#fff', borderRadius: 16, marginBottom: 32, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 10, elevation: 2 }}>
+        <View style={{ backgroundColor: theme.colors.card, borderRadius: 16, marginBottom: 32, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 10, elevation: 2 }}>
           <Image source={{ uri: featuredPost.image }} style={{ width: '100%', height: 180 }} resizeMode="cover" />
           <View style={{ padding: 20 }}>
-            <Text style={{ color: isDark ? '#a7f3d0' : '#059669', fontWeight: 'bold', marginBottom: 4 }}>Featured</Text>
-            <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 6, color: isDark ? '#fff' : '#222' }}>{featuredPost.title}</Text>
-            <Text style={{ fontSize: 16, color: isDark ? '#cbd5e1' : '#334155', marginBottom: 12 }}>{featuredPost.content}</Text>
+            <Text style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 4 }}>Featured</Text>
+            <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 6, color: theme.colors.text }}>{featuredPost.title}</Text>
+            <Text style={{ fontSize: 16, color: theme.colors.secondaryText, marginBottom: 12 }}>{featuredPost.content}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
               <Image source={{ uri: featuredPost.author.avatar }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }} />
               <View>
-                <Text style={{ fontWeight: 'bold', color: isDark ? '#fff' : '#222' }}>{featuredPost.author.name}</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.colors.text }}>{featuredPost.author.name}</Text>
                 <Text style={{ color: theme.colors.secondaryText, fontSize: 12 }}>{featuredPost.author.role}</Text>
               </View>
             </View>
@@ -98,7 +99,7 @@ export default function BlogPage({ navigation }: any) {
               <Text style={{ color: theme.colors.secondaryText, fontSize: 12, marginRight: 16 }}>{featuredPost.date}</Text>
               <Text style={{ color: theme.colors.secondaryText, fontSize: 12 }}>{featuredPost.readTime}</Text>
             </View>
-            <TouchableOpacity style={{ marginTop: 16, backgroundColor: isDark ? '#059669' : '#10b981', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}>
+            <TouchableOpacity style={{ marginTop: 16, backgroundColor: theme.colors.primary, paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}>
               <Text style={{ color: '#fff', fontWeight: 'bold' }}>Read More</Text>
             </TouchableOpacity>
           </View>
@@ -107,16 +108,16 @@ export default function BlogPage({ navigation }: any) {
         {/* Blog Posts Grid */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
           {blogPosts.slice(1).map((post) => (
-            <View key={post.id} style={{ width: '100%', maxWidth: 360, backgroundColor: isDark ? '#1e293b' : '#fff', borderRadius: 16, marginBottom: 24, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, elevation: 1 }}>
+            <View key={post.id} style={{ width: '100%', maxWidth: 360, backgroundColor: theme.colors.card, borderRadius: 16, marginBottom: 24, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, elevation: 1 }}>
               <Image source={{ uri: post.image }} style={{ width: '100%', height: 120 }} resizeMode="cover" />
               <View style={{ padding: 16 }}>
-                <Text style={{ color: isDark ? '#60a5fa' : '#2563eb', fontWeight: 'bold', marginBottom: 4 }}>{post.category}</Text>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 6, color: isDark ? '#fff' : '#222' }}>{post.title}</Text>
-                <Text numberOfLines={2} style={{ fontSize: 14, color: isDark ? '#cbd5e1' : '#334155', marginBottom: 10 }}>{post.content.split('\n')[0]}</Text>
+                <Text style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 4 }}>{post.category}</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 6, color: theme.colors.text }}>{post.title}</Text>
+                <Text numberOfLines={2} style={{ fontSize: 14, color: theme.colors.secondaryText, marginBottom: 10 }}>{post.content.split('\n')[0]}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                   <Image source={{ uri: post.author.avatar }} style={{ width: 24, height: 24, borderRadius: 12, marginRight: 6 }} />
                   <View>
-                    <Text style={{ fontWeight: 'bold', color: isDark ? '#fff' : '#222', fontSize: 13 }}>{post.author.name}</Text>
+                    <Text style={{ fontWeight: 'bold', color: theme.colors.text, fontSize: 13 }}>{post.author.name}</Text>
                     <Text style={{ color: theme.colors.secondaryText, fontSize: 11 }}>{post.date}</Text>
                   </View>
                 </View>

@@ -8,4 +8,7 @@ export type RootStackParamList = {
   Calculator: undefined;
   Mission: undefined;
   Blog: undefined;
+  Vision: undefined;
+  FAQ: undefined;
+  Contact: undefined;
 };

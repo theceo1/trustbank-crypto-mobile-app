@@ -12,6 +12,8 @@ const Button = ({ children, variant = "primary", style, textStyle, ...props }: B
   return (
     <TouchableOpacity
       style={[
+        { width: '100%', alignItems: 'center', justifyContent: 'center', minHeight: 44 },
+
         styles.base,
         variant === "outline" ? styles.outline : styles.primary,
         style,
@@ -20,7 +22,7 @@ const Button = ({ children, variant = "primary", style, textStyle, ...props }: B
       activeOpacity={0.8}
       {...props}
     >
-      <Text style={[styles.text, variant === "outline" ? styles.textOutline : {}, textStyle]}>{children}</Text>
+      <Text style={[textStyle]}>{children}</Text>
     </TouchableOpacity>
   );
 };
