@@ -22,13 +22,90 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* Overlay to close menu when clicking outside (covers whole screen) */}
+      {/* Overlay and Dropdown as siblings for proper zIndex and touch handling */}
       {showMenu && (
-        <TouchableOpacity
-          style={styles.menuOverlay}
-          activeOpacity={1}
-          onPress={() => setShowMenu(false)}
-        />
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+          <TouchableOpacity
+            style={styles.menuOverlay}
+            activeOpacity={1}
+            onPress={() => setShowMenu(false)}
+          />
+          <View style={[styles.menuDropdown, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]} pointerEvents="box-none">
+            
+            {/* Market Page */}
+            <TouchableOpacity
+              style={[styles.menuItem, isActive('Market') && { backgroundColor: '#059669' }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowMenu(false);
+                if (!isActive('Market')) navigation.navigate('Market');
+              }}
+            >
+              <Feather name="bar-chart-2" size={18} color={isActive('Market') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+              <Text style={[styles.menuItemText, isActive('Market') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Market Page</Text>
+            </TouchableOpacity>
+            {/* Trade Guide */}
+            <TouchableOpacity
+              style={[styles.menuItem, isActive('TradeGuide') && { backgroundColor: '#059669' }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowMenu(false);
+                if (!isActive('TradeGuide')) navigation.navigate('TradeGuide');
+              }}
+            >
+              <Feather name="book" size={18} color={isActive('TradeGuide') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+              <Text style={[styles.menuItemText, isActive('TradeGuide') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Trade Guide</Text>
+            </TouchableOpacity>
+            {/* Calculator */}
+            <TouchableOpacity
+              style={[styles.menuItem, isActive('Calculator') && { backgroundColor: '#059669' }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowMenu(false);
+                if (!isActive('Calculator')) navigation.navigate('Calculator');
+              }}
+            >
+              <Feather name="cpu" size={18} color={isActive('Calculator') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+              <Text style={[styles.menuItemText, isActive('Calculator') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Calculator</Text>
+            </TouchableOpacity>
+            {/* Dashboard */}
+            <TouchableOpacity
+              style={[styles.menuItem, isActive('Dashboard') && { backgroundColor: '#059669' }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowMenu(false);
+                if (!isActive('Dashboard')) navigation.navigate('Dashboard');
+              }}
+            >
+              <Feather name="home" size={18} color={isActive('Dashboard') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+              <Text style={[styles.menuItemText, isActive('Dashboard') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Dashboard</Text>
+            </TouchableOpacity>
+            {/* Mission */}
+            <TouchableOpacity
+              style={[styles.menuItem, isActive('Mission') && { backgroundColor: '#059669' }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowMenu(false);
+                if (!isActive('Mission')) navigation.navigate('Mission');
+              }}
+            >
+              <Feather name="globe" size={18} color={isActive('Mission') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+              <Text style={[styles.menuItemText, isActive('Mission') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Mission</Text>
+            </TouchableOpacity>
+            {/* Blog */}
+            <TouchableOpacity
+              style={[styles.menuItem, isActive('Blog') && { backgroundColor: '#059669' }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowMenu(false);
+                if (!isActive('Blog')) navigation.navigate('Blog');
+              }}
+            >
+              <Feather name="book-open" size={18} color={isActive('Blog') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+              <Text style={[styles.menuItemText, isActive('Blog') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Blog</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
       <View style={[styles.header, theme.colors.background === '#101522' && styles.headerDark, { height: HEADER_HEIGHT, backgroundColor: theme.colors.background }]}> 
         {/* Brand Name (left) */}
