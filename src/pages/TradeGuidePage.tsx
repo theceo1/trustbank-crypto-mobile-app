@@ -1,3 +1,4 @@
+//src/pages/TradeGuidePage.tsx
 import React from "react";
 import { View, Text, ScrollView, StyleSheet, useColorScheme } from "react-native";
 import { Feather } from "@expo/vector-icons";

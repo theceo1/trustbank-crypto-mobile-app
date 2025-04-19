@@ -112,7 +112,7 @@ function NavigationMenuItem({ label, onPress, submenu, active, icon }: Navigatio
 const styles = StyleSheet.create({
   menuContainer: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: "#16a32a",
     borderRadius: 10,
     paddingVertical: 6,
     paddingHorizontal: 8,

@@ -48,6 +48,7 @@ function AuthNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="TradeGuide" children={() => <AppLayout><TradeGuidePage /></AppLayout>} />
       {user ? (
         <>
           {/* Authenticated screens only */}
@@ -79,6 +80,7 @@ function AuthNavigator() {
           <Stack.Screen name="Vision" children={() => <AppLayout><VisionScreen /></AppLayout>} />
           <Stack.Screen name="FAQ" children={() => <AppLayout><FAQScreen /></AppLayout>} />
           <Stack.Screen name="Contact" children={() => <AppLayout><ContactScreen /></AppLayout>} />
+          <Stack.Screen name="TradeGuide" children={() => <AppLayout><TradeGuidePage /></AppLayout>} />
         </>
       )}
     </Stack.Navigator>
