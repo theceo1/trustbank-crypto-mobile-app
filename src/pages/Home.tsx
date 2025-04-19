@@ -21,15 +21,23 @@ const Home = () => {
   const scrollRef = useRef<ScrollView | null>(null);
   const navigation = useNavigation();
 
+  // --- Network connectivity test ---
   useEffect(() => {
-    if (!user) {
-      // TODO: Navigate to login screen (use navigation.navigate if using React Navigation)
-      return;
+    fetch("https://xkxihvafbyegowhryojd.supabase.co")
+      .then(res => console.log("[NetworkTest] Supabase reachable:", res.status))
+      .catch(err => console.log("[NetworkTest] Supabase not reachable:", err));
+    fetch("https://google.com")
+      .then(res => console.log("[NetworkTest] Google reachable:", res.status))
+      .catch(err => console.log("[NetworkTest] Google not reachable:", err));
+  }, []);
+
+  useEffect(() => {
+    // Calculate total balance from all wallets if authenticated
+    if (user) {
+      const total = mockWallets.reduce((sum, wallet) => sum + wallet.fiatValue, 0);
+      setTotalBalance(total);
     }
-    // Calculate total balance from all wallets
-    const total = mockWallets.reduce((sum, wallet) => sum + wallet.fiatValue, 0);
-    setTotalBalance(total);
-    // Simulate loading
+    // Simulate loading for all users
     const timer = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(timer);
   }, [user]);

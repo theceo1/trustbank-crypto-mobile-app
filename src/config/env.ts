@@ -1,4 +1,4 @@
-
+// src/config/env.ts
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
@@ -30,8 +30,8 @@ interface Env {
 import Constants from 'expo-constants';
 
 export const env: Env = {
-  SUPABASE_URL: Constants.expoConfig?.extra?.SUPABASE_URL || "",
-  SUPABASE_ANON_KEY: Constants.expoConfig?.extra?.SUPABASE_ANON_KEY || "",
+  SUPABASE_URL: Constants.expoConfig?.extra?.SUPABASE_URL || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  SUPABASE_ANON_KEY: Constants.expoConfig?.extra?.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
   DATABASE_URL: process.env.DATABASE_URL || "",
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",

@@ -38,7 +38,7 @@ const Profile = () => {
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
-      navigation.navigate("Login" as never);
+      // Do not navigate to Login after signOut; let navigation guard handle it.
     } catch (error) {
       toast({
         title: "Error",

@@ -1,3 +1,8 @@
+// src/components/WalletCard.tsx
+// Expo React Native WalletCard component
+// Install dependencies:
+//   expo install @react-native-async-storage/async-storage
+//   npm install react-native-url-polyfill @supabase/supabase-js
 
 import React from "react";
 import { View, Image, Text, StyleSheet, ViewStyle, TouchableOpacity } from "react-native";

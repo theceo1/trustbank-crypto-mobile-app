@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Picker } from '@react-native-picker/picker';
 import { Slider } from "@/components/ui/slider";
 // import BottomNavigation from "@/components/BottomNavigation";
-import { LineChart, Grid } from "react-native-svg-charts";
+import { LineChart } from 'react-native-chart-kit';
 import * as shape from "d3-shape";
 import Svg, { LinearGradient as SvgLinearGradient, Stop, Defs } from "react-native-svg";
 
@@ -112,23 +112,39 @@ const TradePage = () => {
             </Picker>
           </View>
           <View style={{ height: 180 }}>
-            <Svg width={180} height={180} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-              <Defs>
-                <SvgLinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                  <Stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </SvgLinearGradient>
-              </Defs>
-            </Svg>
             <LineChart
-              style={{ height: 180 }}
-              data={mockChartData}
-              contentInset={{ top: 20, bottom: 20 }}
-              curve={shape.curveMonotoneX}
-              svg={{ stroke: 'url(#chartGradient)', strokeWidth: 2 }}
-            >
-              <Grid />
-            </LineChart>
+              data={{
+                labels: ["", "", "", "", "", "", "", "", ""],
+                datasets: [
+                  {
+                    data: mockChartData,
+                    color: () => theme.colors.primary, // optional, can use theme
+                    strokeWidth: 2,
+                  },
+                ],
+              }}
+              width={340} // or use Dimensions.get('window').width - padding
+              height={180}
+              withDots={false}
+              withShadow={false}
+              withInnerLines={true}
+              withOuterLines={false}
+              chartConfig={{
+                backgroundGradientFrom: theme.colors.background,
+                backgroundGradientTo: theme.colors.background,
+                color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`, // #10b981
+                labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                propsForBackgroundLines: {
+                  strokeDasharray: '',
+                  stroke: '#e0e0e0',
+                },
+                propsForDots: {
+                  r: "0",
+                },
+              }}
+              bezier
+              style={{ borderRadius: 8 }}
+            />
           </View>
           <View style={{ flexDirection: 'row', marginTop: 16 }}>
             <Button 

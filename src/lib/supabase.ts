@@ -1,4 +1,4 @@
-
+// src/lib/supabase.ts
 // Expo React Native Supabase setup
 // Install dependencies:
 //   expo install @react-native-async-storage/async-storage
@@ -10,14 +10,14 @@ import { createClient } from '@supabase/supabase-js';
 import { env } from '@/config/env';
 
 export const supabase = createClient(
-  env.SUPABASE_URL,
-  env.SUPABASE_ANON_KEY,
+"https://xkxihvafbyegowhryojd.supabase.co",  
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreGlodmFmYnllZ293aHJ5b2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMzMzMwOTgsImV4cCI6MjA0ODkwOTA5OH0.BbXmFe3-y39l8BENL8GRdopGYZwd6PNlZYiXnsJfhEE",
   {
     auth: {
       storage: AsyncStorage,
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: false, // mobile should be false
+      detectSessionInUrl: false,
     },
   }
 );

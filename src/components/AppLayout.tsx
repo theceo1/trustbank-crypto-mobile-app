@@ -1,5 +1,6 @@
+//src/components/AppLayout.tsx
 import React, { useState } from "react";
-import { View, Text, StyleSheet, SafeAreaView, Platform, StatusBar, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, SafeAreaView, Platform, StatusBar, TouchableOpacity, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/types/navigation';
@@ -7,6 +8,9 @@ import { Feather } from "@expo/vector-icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/lib/supabase";
 
 const HEADER_HEIGHT = 56;
 const BOTTOM_NAV_HEIGHT = 64;
@@ -16,113 +20,130 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { theme, setThemeName } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
 
   // Helper to check if a menu item is active
   const isActive = (name: string) => route.name === name;
 
+  // Define menu items array
+  const PUBLIC_MENU = [
+    { name: 'Market', icon: 'bar-chart-2', label: 'Market Page', route: 'Market' },
+    { name: 'Blog', icon: 'book-open', label: 'Blog', route: 'Blog' },
+    { name: 'Mission', icon: 'globe', label: 'Mission', route: 'Mission' },
+    { name: 'Vision', icon: 'eye', label: 'Vision', route: 'Vision' },
+    { name: 'FAQ', icon: 'help-circle', label: 'FAQ', route: 'FAQ' },
+    { name: 'Contact', icon: 'mail', label: 'Contact', route: 'Contact' },
+    { name: 'TradeGuide', icon: 'book', label: 'Trade Guide', route: 'TradeGuide' }, // Always show Trade Guide
+  ];
+  const AUTH_MENU = [
+    { name: 'Dashboard', icon: 'grid', label: 'Dashboard', route: 'Dashboard' },
+    { name: 'Wallet', icon: 'credit-card', label: 'Wallet', route: 'Wallet' },
+    { name: 'Trade', icon: 'repeat', label: 'Trade', route: 'Trade' },
+    { name: 'Profile', icon: 'user', label: 'Profile', route: 'Profile' },
+    { name: 'KycIntro', icon: 'user-check', label: 'KYC Intro', route: 'KycIntro' },
+    { name: 'KycVerification', icon: 'user-check', label: 'KYC Verification', route: 'KycVerification' },
+    { name: 'VerificationPending', icon: 'clock', label: 'Verification Pending', route: 'VerificationPending' },
+    { name: 'Calculator', icon: 'cpu', label: 'Calculator', route: 'Calculator' },
+    { name: 'TradeGuide', icon: 'book', label: 'Trade Guide', route: 'TradeGuide' }, // Always show Trade Guide
+  ];
+  const menuToShow = user ? [...AUTH_MENU, ...PUBLIC_MENU] : PUBLIC_MENU;
+  const menuItems = [
+    ...menuToShow.map(item => (
+      <TouchableOpacity
+        key={item.name}
+        style={[styles.menuItem, isActive(item.route) && { backgroundColor: '#059669' }]}
+        activeOpacity={0.85}
+        onPress={() => {
+          setShowMenu(false);
+          if (!user && AUTH_MENU.some(auth => auth.route === item.route)) {
+            toast({
+              title: 'Sign in required',
+              description: 'Please sign in to access this page.',
+              variant: 'destructive',
+            });
+            return;
+          }
+          if (!isActive(item.route)) {
+            try {
+              navigation.navigate(item.route as never);
+            } catch (err: any) {
+              toast({
+                title: 'Navigation error',
+                description: err?.message || 'Could not navigate to page.',
+                variant: 'destructive',
+              });
+            }
+          }
+        }}
+      >
+        <Feather name={item.icon as any} size={18} color={isActive(item.route) ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
+        <Text style={[styles.menuItemText, isActive(item.route) ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>{item.label}</Text>
+      </TouchableOpacity>
+    )),
+    user && (
+      <TouchableOpacity
+        key="signout"
+        style={[styles.menuItem, { borderTopWidth: 1, borderTopColor: '#eee', marginTop: 10 }]}
+        activeOpacity={0.85}
+        onPress={async () => {
+          try {
+            await signOut();
+            setShowMenu(false);
+            toast({
+              title: 'Goodbye!',
+              description: 'You have been signed out.',
+            });
+            navigation.reset({ index: 0, routes: [{ name: 'Home' as never }] });
+          } catch (err: any) {
+            toast({
+              title: 'Sign out failed',
+              description: err?.message || 'Could not sign out.',
+              variant: 'destructive',
+            });
+            console.error('[AppLayout] Error signing out:', err);
+          }
+        }}
+      >
+        <Feather name="log-out" size={18} color="#f43f5e" style={{ marginRight: 8 }} />
+        <Text style={[styles.menuItemText, { color: '#f43f5e', fontWeight: 'bold' }]}>Sign Out</Text>
+      </TouchableOpacity>
+    ),
+    !user && (
+      <TouchableOpacity
+        key="signin"
+        style={[styles.menuItem, { borderTopWidth: 1, borderTopColor: '#eee', marginTop: 10 }]}
+        activeOpacity={0.85}
+        onPress={() => {
+          setShowMenu(false);
+          navigation.navigate('Login' as never);
+        }}
+      >
+        <Feather name="log-in" size={18} color="#059669" style={{ marginRight: 8 }} />
+        <Text style={[styles.menuItemText, { color: '#059669', fontWeight: 'bold' }]}>Sign In</Text>
+      </TouchableOpacity>
+    ),
+  ];
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* Overlay and Dropdown as siblings for proper zIndex and touch handling */}
       {showMenu && (
-        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <>
           <TouchableOpacity
             style={styles.menuOverlay}
             activeOpacity={1}
             onPress={() => setShowMenu(false)}
           />
           <View style={[styles.menuDropdown, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]} pointerEvents="box-none">
-            
-            {/* Market Page */}
-            <TouchableOpacity
-              style={[styles.menuItem, isActive('Market') && { backgroundColor: '#059669' }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                setShowMenu(false);
-                if (!isActive('Market')) navigation.navigate('Market');
-              }}
-            >
-              <Feather name="bar-chart-2" size={18} color={isActive('Market') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-              <Text style={[styles.menuItemText, isActive('Market') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Market Page</Text>
-            </TouchableOpacity>
-            {/* Trade Guide */}
-            <TouchableOpacity
-              style={[styles.menuItem, isActive('TradeGuide') && { backgroundColor: '#059669' }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                setShowMenu(false);
-                if (!isActive('TradeGuide')) navigation.navigate('TradeGuide');
-              }}
-            >
-              <Feather name="book" size={18} color={isActive('TradeGuide') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-              <Text style={[styles.menuItemText, isActive('TradeGuide') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Trade Guide</Text>
-            </TouchableOpacity>
-            {/* Calculator */}
-            <TouchableOpacity
-              style={[styles.menuItem, isActive('Calculator') && { backgroundColor: '#059669' }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                setShowMenu(false);
-                if (!isActive('Calculator')) navigation.navigate('Calculator');
-              }}
-            >
-              <Feather name="cpu" size={18} color={isActive('Calculator') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-              <Text style={[styles.menuItemText, isActive('Calculator') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Calculator</Text>
-            </TouchableOpacity>
-            {/* Dashboard */}
-            <TouchableOpacity
-              style={[styles.menuItem, isActive('Dashboard') && { backgroundColor: '#059669' }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                setShowMenu(false);
-                if (!isActive('Dashboard')) navigation.navigate('Dashboard');
-              }}
-            >
-              <Feather name="home" size={18} color={isActive('Dashboard') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-              <Text style={[styles.menuItemText, isActive('Dashboard') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Dashboard</Text>
-            </TouchableOpacity>
-            {/* Mission */}
-            <TouchableOpacity
-              style={[styles.menuItem, isActive('Mission') && { backgroundColor: '#059669' }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                setShowMenu(false);
-                if (!isActive('Mission')) navigation.navigate('Mission');
-              }}
-            >
-              <Feather name="globe" size={18} color={isActive('Mission') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-              <Text style={[styles.menuItemText, isActive('Mission') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Mission</Text>
-            </TouchableOpacity>
-            {/* Vision */}
-            <TouchableOpacity
-              style={[styles.menuItem, isActive('Vision') && { backgroundColor: '#059669' }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                setShowMenu(false);
-                if (!isActive('Vision')) navigation.navigate('Vision');
-              }}
-            >
-              <Feather name="eye" size={18} color={isActive('Vision') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-              <Text style={[styles.menuItemText, isActive('Vision') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Vision</Text>
-            </TouchableOpacity>
-            {/* Blog */}
-            <TouchableOpacity
-              style={[styles.menuItem, isActive('Blog') && { backgroundColor: '#059669' }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                setShowMenu(false);
-                if (!isActive('Blog')) navigation.navigate('Blog');
-              }}
-            >
-              <Feather name="book-open" size={18} color={isActive('Blog') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-              <Text style={[styles.menuItemText, isActive('Blog') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Blog</Text>
-            </TouchableOpacity>
+            {menuItems}
           </View>
-        </View>
+        </>
       )}
-      <View style={[styles.header, theme.colors.background === '#101522' && styles.headerDark, { height: HEADER_HEIGHT, backgroundColor: theme.colors.background }]}> 
-        {/* Brand Name (left) */}
+      {/* HEADER SECTION RESTORED */}
+      <View style={[styles.header, theme.colors.background === '#101522' && styles.headerDark]}>
+        {/* Logo/Brand (left) */}
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.navigate('Home')} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Index' as never }] })} activeOpacity={0.7} accessibilityLabel="Go to homepage">
             <Text style={{ fontWeight: 'bold', fontSize: 20, color: theme.colors.background === '#101522' ? '#fff' : '#000', letterSpacing: 0.5 }}>trustBank</Text>
           </TouchableOpacity>
         </View>
@@ -137,128 +158,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             />
           </TouchableOpacity>
         </View>
-        {/* Custom Header Menu */}
-        {showMenu && (
-          <>
-            {/* Overlay to close menu when clicking outside */}
-            <TouchableOpacity
-              style={styles.menuOverlay}
-              activeOpacity={1}
-              onPress={() => setShowMenu(false)}
-            />
-            <View style={[styles.menuDropdown, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}> 
-              {/* Market Page */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('Market') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('Market')) navigation.navigate('Market');
-                }}
-              >
-                <Feather name="bar-chart-2" size={18} color={isActive('Market') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('Market') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Market Page</Text>
-              </TouchableOpacity>
-              {/* Trade Guide */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('TradeGuide') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('TradeGuide')) navigation.navigate('TradeGuide');
-                }}
-              >
-                <Feather name="book" size={18} color={isActive('TradeGuide') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('TradeGuide') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Trade Guide</Text>
-              </TouchableOpacity>
-              {/* Calculator */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('Calculator') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('Calculator')) navigation.navigate('Calculator');
-                }}
-              >
-                <Feather name="cpu" size={18} color={isActive('Calculator') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('Calculator') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Calculator</Text>
-              </TouchableOpacity>
-              {/* Dashboard */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('Dashboard') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('Dashboard')) navigation.navigate('Dashboard');
-                }}
-              >
-                <Feather name="home" size={18} color={isActive('Dashboard') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('Dashboard') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Dashboard</Text>
-              </TouchableOpacity>
-              {/* Mission */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('Mission') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('Mission')) navigation.navigate('Mission');
-                }}
-              >
-                <Feather name="globe" size={18} color={isActive('Mission') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('Mission') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Mission</Text>
-              </TouchableOpacity>
-              {/* Vision */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('Vision') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('Vision')) navigation.navigate('Vision');
-                }}
-              >
-                <Feather name="eye" size={18} color={isActive('Vision') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('Vision') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Vision</Text>
-              </TouchableOpacity>
-              {/* FAQ */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('FAQ') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('FAQ')) navigation.navigate('FAQ');
-                }}
-              >
-                <Feather name="help-circle" size={18} color={isActive('FAQ') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('FAQ') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>FAQ</Text>
-              </TouchableOpacity>
-              {/* Contact */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('Contact') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('Contact')) navigation.navigate('Contact');
-                }}
-              >
-                <Feather name="mail" size={18} color={isActive('Contact') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('Contact') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Contact</Text>
-              </TouchableOpacity>
-              {/* Blog */}
-              <TouchableOpacity
-                style={[styles.menuItem, isActive('Blog') && { backgroundColor: '#059669' }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setShowMenu(false);
-                  if (!isActive('Blog')) navigation.navigate('Blog');
-                }}
-              >
-                <Feather name="book-open" size={18} color={isActive('Blog') ? '#fff' : (theme.colors.background === '#101522' ? '#fff' : '#000')} style={{ marginRight: 8 }} />
-                <Text style={[styles.menuItemText, isActive('Blog') ? { color: '#fff' } : { color: theme.colors.background === '#101522' ? '#fff' : '#000' }]}>Blog</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
       </View>
+      {/* CONTENT AND NAVIGATION */}
       <View style={[styles.contentWrapper, { flex: 1 }]} > 
         <View style={[styles.content, { flex: 1, backgroundColor: theme.colors.background }]}>{children}</View>
       </View>

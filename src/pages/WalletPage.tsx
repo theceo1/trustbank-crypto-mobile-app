@@ -1,111 +1,264 @@
 //src/pages/WalletPage.tsx
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Modal, ActivityIndicator, FlatList, Image } from "react-native";
 import { useTheme } from '@/contexts/ThemeContext';
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import Button from "@/components/ui/button";
+import React, { useState, useMemo, useEffect } from "react";
+import { quidax } from '@/lib/quidax';
+import { supabase } from '@/lib/supabase';
+
+// Modal components for Deposit, Withdraw, Receive, Send (simple placeholders)
+const ActionModal = ({ visible, onClose, title, children }: any) => (
+  <Modal visible={visible} transparent animationType="slide">
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>{title}</Text>
+        {children}
+        <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
+          <Text style={styles.modalCloseText}>Close</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
+);
+
+import { useNavigation } from '@react-navigation/native';
 
 const WalletPage = () => {
   const { theme } = useTheme();
   const navigation = useNavigation();
-  // Mock data
-  const wallets = [
-    { id: '1', currency: 'NGN', balance: 0, estimatedValue: 0 },
-    { id: '2', currency: 'BTC', balance: 0.00000220, estimatedValue: 0 },
-    { id: '3', currency: 'ETH', balance: 0, estimatedValue: 0 },
-    { id: '4', currency: 'XRP', balance: 0, estimatedValue: 0 },
-    { id: '5', currency: 'USDT', balance: 0, estimatedValue: 0 },
-    { id: '6', currency: 'TRUMP', balance: 0, estimatedValue: 0 },
-  ];
-  const totalPortfolioValue = 531.94;
+  const [wallets, setWallets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAllWallets, setShowAllWallets] = useState(false);
+  const [modal, setModal] = useState<null | 'deposit' | 'withdraw' | 'receive' | 'send'>(null);
+  const [selectedWallet, setSelectedWallet] = useState<any>(null);
+
+  // Sign out handler
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      if (navigation && navigation.reset) {
+        navigation.reset({ index: 0, routes: [{ name: 'Login' as never }] });
+      } else if (navigation && navigation.navigate) {
+        navigation.navigate('Login' as never);
+      }
+    } catch (err) {
+      console.error('[WalletPage] Error signing out:', err);
+    }
+  };
+
+
+  useEffect(() => {
+    const fetchWallets = async () => {
+      console.log('[WalletPage] Fetching wallets...'); // [DEBUG]
+      setLoading(true);
+      setError(null);
+      try {
+        // 1. Get current user's Supabase session
+        console.log('[WalletPage] About to call supabase.auth.getUser()'); // [DEBUG]
+        let userResult;
+        try {
+          userResult = await supabase.auth.getUser();
+          console.log('[WalletPage] supabase.auth.getUser() result:', JSON.stringify(userResult)); // [DEBUG]
+        } catch (err) {
+          console.error('[WalletPage] supabase.auth.getUser() threw error:', err);
+          throw err;
+        }
+        const { data: { user }, error: userError } = userResult || {};
+        console.log('[WalletPage] Supabase user:', user, userError); // [DEBUG]
+        if (userError || !user) throw new Error('Not authenticated');
+
+        // 2. Fetch user profile (get quidax_id)
+        console.log('[WalletPage] About to query user_profiles for quidax_id. user.id:', user.id); // [DEBUG]
+        const profileResult = await supabase
+          .from('user_profiles')
+          .select('quidax_id')
+          .eq('id', user.id)
+          .single();
+        console.log('[WalletPage] user_profiles query result:', JSON.stringify(profileResult)); // [DEBUG]
+        const { data: profile, error: profileError } = profileResult;
+        console.log('[WalletPage] Supabase profile:', profile, profileError); // [DEBUG]
+        if (profileError || !profile?.quidax_id) throw new Error('No Quidax user ID');
+
+        // 3. Fetch wallets for this Quidax user
+        console.log('[WalletPage] About to call quidax.getWalletsForUser with quidax_id:', profile.quidax_id); // [DEBUG]
+        const res = await quidax.getWalletsForUser(profile.quidax_id);
+        console.log('[WalletPage] Quidax wallets response:', JSON.stringify(res)); // [DEBUG]
+        if (!res || !res.data) throw new Error('No wallets returned from Quidax');
+        setWallets(res.data);
+        console.log('[WalletPage] setWallets called with:', JSON.stringify(res.data)); // [DEBUG]
+      } catch (e: any) {
+        console.error('[WalletPage] fetchWallets error:', e); // [DEBUG]
+        setError('Failed to load wallets.');
+      } finally {
+        setLoading(false);
+        console.log('[WalletPage] Loading set to false'); // [DEBUG]
+      }
+    };
+
+    fetchWallets();
+  }, []);
+
+  // Add a log before rendering wallet list
+  useEffect(() => {
+    console.log('[WalletPage] Rendering, loading:', loading, 'error:', error, 'wallets:', wallets); // [DEBUG]
+  }, [loading, error, wallets]);
+
+
+  const totalPortfolioValue = useMemo(() => {
+    return wallets.reduce((sum, w) => sum + (parseFloat(w.fiat_value || w.fiatValue || 0)), 0);
+  }, [wallets]);
   const transactions = [
-    { id: '1', type: 'swap', amount: 0.00000576, currency: 'BTC', status: 'completed', createdAt: '2025-04-15' },
-    { id: '2', type: 'trade', amount: 100, currency: 'USDT', status: 'completed', createdAt: '2025-04-14' },
+    { id: '1', type: 'deposit', amount: 0.05, currency: 'BTC', status: 'completed', createdAt: '2025-04-15' },
+    { id: '2', type: 'withdrawal', amount: 100, currency: 'USDT', status: 'completed', createdAt: '2025-04-14' },
+    { id: '3', type: 'deposit', amount: 300, currency: 'NGN', status: 'pending', createdAt: '2025-04-13' },
   ];
+  const [search, setSearch] = useState("");
+  const [showSecurityTip, setShowSecurityTip] = useState(true);
+
+  const filteredTransactions = useMemo(() => {
+    if (!search) return transactions;
+    const q = search.toLowerCase();
+    return transactions.filter(tx =>
+      tx.type.toLowerCase().includes(q) ||
+      tx.currency.toLowerCase().includes(q) ||
+      String(tx.amount).includes(q) ||
+      tx.status.toLowerCase().includes(q)
+    );
+  }, [transactions, search]);
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Top menu/header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: theme.colors.background, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.colors.text }}>Wallets</Text>
+      </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 90 }}>
         {/* Action Buttons */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]}
-            onPress={() => navigation.navigate("Deposit" as never)}>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]} onPress={() => setModal('deposit')}>
             <Feather name="download" size={22} color={theme.colors.background} />
             <Text style={styles.actionLabel}>Deposit</Text>
             <Text style={styles.actionSub}>Add funds to your wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]}
-            onPress={() => navigation.navigate("Withdraw" as never)}>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]} onPress={() => setModal('withdraw')}>
             <Feather name="upload" size={22} color={theme.colors.background} />
             <Text style={styles.actionLabel}>Withdraw</Text>
             <Text style={styles.actionSub}>Send funds to external wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.colors.secondaryText }]}
-            onPress={() => navigation.navigate("Swap" as never)}>
-            <Feather name="repeat" size={22} color={theme.colors.background} />
-            <Text style={styles.actionLabel}>Instant Swap</Text>
-            <Text style={styles.actionSub}>Exchange between currencies</Text>
-          </TouchableOpacity>
         </View>
 
+        {/* Modals for actions */}
+        <ActionModal visible={modal==='deposit'} onClose={() => setModal(null)} title="Deposit">
+          <Text>Deposit modal for {selectedWallet?.currency || 'your wallet'} (placeholder)</Text>
+        </ActionModal>
+        <ActionModal visible={modal==='withdraw'} onClose={() => setModal(null)} title="Withdraw">
+          <Text>Withdraw modal for {selectedWallet?.currency || 'your wallet'} (placeholder)</Text>
+        </ActionModal>
+        <ActionModal visible={modal==='receive'} onClose={() => setModal(null)} title="Receive">
+          <Text>Receive modal for {selectedWallet?.currency || 'your wallet'} (placeholder)</Text>
+        </ActionModal>
+        <ActionModal visible={modal==='send'} onClose={() => setModal(null)} title="Send">
+          <Text>Send modal for {selectedWallet?.currency || 'your wallet'} (placeholder)</Text>
+        </ActionModal>
+
         {/* Portfolio Value Card */}
-        <View style={[styles.portfolioCard, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.portfolioCard, { backgroundColor: theme.colors.background }]}> 
           <Text style={styles.portfolioLabel}>Total Portfolio Value</Text>
           <Text style={styles.portfolioValue}>₦{totalPortfolioValue}</Text>
           <Text style={styles.portfolioSub}>Your total balance across all wallets</Text>
         </View>
 
+        {/* Asset Distribution Chart Placeholder */}
+        <View style={styles.assetDistributionCard}>
+          <Text style={styles.assetDistributionTitle}>Asset Distribution</Text>
+          {/* Replace below with real chart if available */}
+          <View style={styles.assetDistributionChartPlaceholder} />
+          <Text style={styles.assetDistributionLegend}>See how your assets are distributed across wallets</Text>
+        </View>
+
         {/* Wallets Header */}
         <View style={styles.walletsHeader}>
           <Text style={styles.walletsCount}>{wallets.length} wallets</Text>
-          <TouchableOpacity style={styles.addWalletBtn} onPress={() => navigation.navigate("AddWallet" as never)}>
-            <Feather name="plus" size={18} color="#10b981" />
-            <Text style={styles.addWalletText}>Add New</Text>
+          <TouchableOpacity style={styles.showAllBtn} onPress={() => setShowAllWallets((v) => !v)}>
+            <Feather name={showAllWallets ? 'chevron-up' : 'chevron-down'} size={18} color="#10b981" />
+            <Text style={styles.showAllText}>{showAllWallets ? 'Show Less' : 'Show All Wallets'}</Text>
           </TouchableOpacity>
         </View>
         <View style={[styles.searchBox, { backgroundColor: theme.colors.card }]}>
           <Feather name="search" size={16} color="#888" style={{ marginRight: 6 }} />
-          <Text style={styles.searchPlaceholder}>Search wallets...</Text>
+          <TextInput
+            style={[styles.searchPlaceholder, { flex: 1 }]}
+            placeholder="Search transactions..."
+            placeholderTextColor="#888"
+            value={search}
+            onChangeText={setSearch}
+          />
         </View>
+
+        {/* Security Reminder */}
+        {showSecurityTip && (
+          <View style={{ backgroundColor: '#fffbe6', borderRadius: 10, marginHorizontal: 14, marginVertical: 10, padding: 12, flexDirection: 'row', alignItems: 'center' }}>
+            <Feather name="shield" size={18} color="#f59e42" style={{ marginRight: 8 }} />
+            <Text style={{ color: '#b45309', fontSize: 13, flex: 1 }}>
+              For your security, enable 2FA and verify your account. Never share your recovery phrases or passwords.
+            </Text>
+            <TouchableOpacity onPress={() => setShowSecurityTip(false)} style={{ marginLeft: 6 }}>
+              <Feather name="x" size={16} color="#b45309" />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Wallet List */}
         <View style={styles.walletsList}>
-          {wallets.map(wallet => (
-            <View key={wallet.id} style={[styles.walletCard, { backgroundColor: theme.colors.background }]}>
-              <View style={styles.walletCardRow}>
-                <Text style={styles.walletCurrency}>{wallet.currency}</Text>
-                <Text style={styles.walletBalance}>{wallet.currency === 'BTC' ? wallet.balance : `₦${wallet.balance}`}</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color="#10b981" style={{ marginVertical: 30 }} />
+          ) : error ? (
+            <Text style={{ color: 'red', textAlign: 'center', margin: 18 }}>{error}</Text>
+          ) : (
+            (showAllWallets ? wallets : wallets.slice(0, 6)).map(wallet => (
+              <View key={wallet.id} style={styles.walletCardModern}>
+                <View style={styles.walletCardLeft}>
+                  <Image source={{ uri: wallet.icon_url || wallet.iconUrl || 'https://cryptologos.cc/logos/generic-crypto.png' }} style={styles.walletIcon} />
+                  <View>
+                    <Text style={styles.walletCurrencyModern}>{wallet.currency?.toUpperCase()}</Text>
+                    <Text style={styles.walletName}>{wallet.name || wallet.currency}</Text>
+                  </View>
+                </View>
+                <View style={styles.walletCardRight}>
+                  <Text style={styles.walletBalanceModern}>{parseFloat(wallet.balance).toLocaleString()}</Text>
+                  <Text style={styles.walletEstValueModern}>₦{parseFloat(wallet.fiat_value || wallet.fiatValue || 0).toLocaleString()}</Text>
+                  <View style={styles.walletActionsRowModern}>
+                    <TouchableOpacity style={styles.walletActionBtnModern} onPress={() => { setSelectedWallet(wallet); setModal('receive'); }}>
+                      <Feather name="arrow-down-left" size={16} color="#10b981" />
+                      <Text style={styles.walletActionTextModern}>Receive</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.walletActionBtnModern} onPress={() => { setSelectedWallet(wallet); setModal('send'); }}>
+                      <Feather name="arrow-up-right" size={16} color="#f43f5e" />
+                      <Text style={styles.walletActionTextModern}>Send</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.walletEstValue}>Estimated Value ₦{wallet.estimatedValue}</Text>
-              <View style={styles.walletActionsRow}>
-                <Button style={styles.walletActionBtn}><Text style={styles.walletActionText}>Deposit</Text></Button>
-                <Button style={styles.walletActionBtn}><Text style={styles.walletActionText}>Withdraw</Text></Button>
-                <Button style={styles.walletActionBtn}><Text style={styles.walletActionText}>Swap</Text></Button>
-              </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
-        {/* Asset Distribution Placeholder */}
-        <View style={[styles.assetDistributionCard, { backgroundColor: theme.colors.background }]}>
-          <Text style={styles.assetDistributionTitle}>Asset Distribution</Text>
-          <View style={[styles.assetDistributionChartPlaceholder, { backgroundColor: theme.colors.card }]} />
-          <Text style={styles.assetDistributionLegend}>BTC (40.3%)   USDT (33.8%)   SOL (25.8%)</Text>
-        </View>
-
-        {/* Transaction History */}
-        <View style={[styles.transactionsCard, { backgroundColor: theme.colors.background }]}>
-          <Text style={styles.transactionsTitle}>Recent Transactions</Text>
-          {transactions.map(tx => (
-            <View key={tx.id} style={styles.transactionItem}>
-              <Feather name={tx.type === 'swap' ? 'repeat' : 'bar-chart-2'} size={18} color={tx.type === 'swap' ? '#6366f1' : '#a21caf'} style={{ marginRight: 10 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.transactionLabel}>{tx.type === 'swap' ? 'Swap' : 'Trade'}</Text>
+        {/* Transactions Card */}
+        <View style={styles.transactionsCard}>
+          <Text style={styles.transactionsTitle}>Transaction History</Text>
+          {filteredTransactions.length === 0 ? (
+            <Text style={{ color: '#64748b', textAlign: 'center', margin: 18 }}>No transactions found.</Text>
+          ) : (
+            filteredTransactions.map(tx => (
+              <View key={tx.id} style={styles.transactionItem}>
+                <Text style={styles.transactionLabel}>{tx.type.toUpperCase()}</Text>
                 <Text style={styles.transactionDate}>{tx.createdAt}</Text>
+                <Text style={styles.transactionAmount}>{tx.amount} {tx.currency}</Text>
+                <Text style={{ color: tx.status === 'completed' ? '#10b981' : '#f59e42', fontSize: 12 }}>{tx.status}</Text>
               </View>
-              <Text style={[styles.transactionAmount, { color: tx.type === 'swap' ? '#6366f1' : '#a21caf' }]}>+{tx.amount} {tx.currency}</Text>
-            </View>
-          ))}
+            ))
+          )}
         </View>
       </ScrollView>
     </View>
@@ -114,6 +267,134 @@ const WalletPage = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 }, // backgroundColor moved to inline style for theme support
+
+  // --- Modal Styles ---
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    padding: 24,
+    minWidth: '80%',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 16,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#1a237e',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalCloseBtn: {
+    marginTop: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    backgroundColor: '#e0e7ff',
+    borderRadius: 8,
+  },
+  modalCloseText: {
+    color: '#1a237e',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+
+  // --- Show All Wallets Button ---
+  showAllBtn: {
+    borderWidth: 1,
+    borderColor: '#10b981',
+    backgroundColor: '#e6fcf5',
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  showAllText: {
+    color: '#10b981',
+    fontWeight: '600',
+    marginLeft: 4,
+    fontSize: 13,
+  },
+
+  // --- Modern Wallet Card Styles ---
+  walletCardModern: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    marginBottom: 12,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#1a237e',
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+  },
+  walletCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  walletIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    marginRight: 14,
+    backgroundColor: '#f1f5f9',
+  },
+  walletCurrencyModern: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#1a237e',
+  },
+  walletName: {
+    fontSize: 12,
+    color: '#64748b',
+    fontStyle: 'italic',
+  },
+  walletCardRight: {
+    alignItems: 'flex-end',
+    minWidth: 90,
+  },
+  walletBalanceModern: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#1a237e',
+  },
+  walletEstValueModern: {
+    fontSize: 12,
+    color: '#10b981',
+    marginBottom: 4,
+  },
+  walletActionsRowModern: {
+    flexDirection: 'row',
+    marginTop: 2,
+  },
+  walletActionBtnModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e0e7ff',
+    borderRadius: 8,
+    marginHorizontal: 2,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  walletActionTextModern: {
+    color: '#1a237e',
+    fontWeight: 'bold',
+    fontSize: 13,
+    marginLeft: 4,
+  },
   Row: {
     flexDirection: 'row',
     alignItems: 'flex-start',

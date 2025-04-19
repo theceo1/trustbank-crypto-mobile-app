@@ -28,6 +28,7 @@ interface MarketTicker {
 }
 
 class QuidaxClient {
+
   private config: QuidaxConfig;
 
   constructor(config: QuidaxConfig) {
@@ -151,19 +152,57 @@ class QuidaxClient {
   }
 
   async getWallets() {
-    try {
-      const response = await fetch(`${this.config.apiUrl}/users/me/wallets`, {
-        method: "GET",
-        headers: this.getHeaders(),
-      });
+    // Deprecated: Only use for parent accounts
+    // Use getWalletsForUser for sub-accounts
+  }
 
+  async getWalletsForUser(userId: string) {
+    const url = `${this.config.apiUrl}/users/${userId}/wallets`;
+    const headers = this.getHeaders();
+    console.log('[Quidax] Fetching wallets for user', { url, headers });
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers,
+      });
+      console.log('[Quidax] Response status', response.status);
       if (!response.ok) {
+        const text = await response.text();
+        console.error('[Quidax] Error response body:', text);
+        throw new Error(`Error fetching wallets for user: ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('[Quidax] Wallets data:', data);
+      return data;
+    } catch (error) {
+      console.error("[Quidax] Get wallets for user error:", error, error?.stack);
+      throw error;
+    }
+  }
+
+  async getWallets() {
+    // Deprecated: Only use for parent accounts
+    // Use getWalletsForUser for sub-accounts
+    
+    const url = `${this.config.apiUrl}/users/me/wallets`;
+    const headers = this.getHeaders();
+    console.log('[Quidax] Fetching wallets', { url, headers });
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers,
+      });
+      console.log('[Quidax] Response status', response.status);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[Quidax] Error response body:', text);
         throw new Error(`Error fetching wallets: ${response.statusText}`);
       }
-
-      return await response.json();
+      const data = await response.json();
+      console.log('[Quidax] Wallets data:', data);
+      return data;
     } catch (error) {
-      console.error("Get wallets error:", error);
+      console.error("[Quidax] Get wallets error:", error, error?.stack);
       throw error;
     }
   }
