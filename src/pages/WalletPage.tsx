@@ -246,28 +246,22 @@ const WalletPage = () => {
 
         // Color palette for cards (separate for light/dark theme)
         // These colors are chosen for vibrance and theme contrast
-        const cardColors = colorScheme === 'dark'
-          ? [
-              '#232946', // dark blue
-              '#3a3b5a', // deep indigo
-              '#2d3a3a', // teal
-              '#33334d', // purple
-              '#1a2a2a', // greenish
-              theme.colors.card, // fallback theme card
-            ]
-          : [
-              theme.colors.card,
-              '#e0f7fa', // cyan
-              '#fce4ec', // pink
-              '#f3e8ff', // purple
-              '#fffde7', // yellow
-              '#e8f5e9', // green
-            ];
+        // Always assign a visible background color from a fixed palette, cycling through for variety
+        const cardColors = [
+          '#e3f2fd', // light blue
+          '#fce4ec', // pink
+          '#f3e8ff', // purple
+          '#fffde7', // yellow
+          '#e8f5e9', // green
+          '#fbe9e7', // orange
+          '#ede7f6', // lavender
+          '#e0f2f1', // teal
+          '#f9fbe7', // lime
+          '#f1f8e9', // light green
+        ];
         let bgColor = cardColors[idx % cardColors.length]; // rotate palette for variety
-        // In dark mode, if the card color is theme.colors.card (likely black), override to visible dark gray
-        if (colorScheme === 'dark' && bgColor === theme.colors.card) {
-          bgColor = '#232946'; // visible dark blue-gray for default cards in dark mode
-        }
+        // All cards now always have a visible background, never transparent or theme.colors.card
+
         return (
           <View
             key={wallet.id}
@@ -318,18 +312,29 @@ const WalletPage = () => {
   )}
 </View>
 
-        {/* Transactions Card */}
-        <View style={styles.transactionsCard}>
-          <Text style={styles.transactionsTitle}>Transaction History</Text>
+        {/* Transactions Card: visually distinct, modern card layout */}
+        <View style={[styles.transactionsCardModern, { backgroundColor: '#f3e8ff', borderRadius: 18, padding: 14, marginHorizontal: 10, marginTop: 20, marginBottom: 30, elevation: 2 }]}> 
+          <Text style={{ fontWeight: 'bold', fontSize: 17, color: '#1a1a1a', marginBottom: 10 }}>Transaction History</Text>
           {filteredTransactions.length === 0 ? (
             <Text style={{ color: '#64748b', textAlign: 'center', margin: 18 }}>No transactions found.</Text>
           ) : (
-            filteredTransactions.map(tx => (
-              <View key={tx.id} style={styles.transactionItem}>
-                <Text style={styles.transactionLabel}>{tx.type.toUpperCase()}</Text>
-                <Text style={styles.transactionDate}>{tx.createdAt}</Text>
-                <Text style={styles.transactionAmount}>{tx.amount} {tx.currency}</Text>
-                <Text style={{ color: tx.status === 'completed' ? '#10b981' : '#f59e42', fontSize: 12 }}>{tx.status}</Text>
+            filteredTransactions.map((tx, idx) => (
+              <View key={tx.id}>
+                <View style={styles.transactionRowModern}>
+                  {/* Type as a colored badge */}
+                  <View style={[styles.txBadge, { backgroundColor: tx.type === 'deposit' ? '#e0f7fa' : tx.type === 'withdraw' ? '#fde4e4' : '#e8f5e9' }]}> 
+                    <Text style={{ color: '#1a1a1a', fontWeight: 'bold', fontSize: 12 }}>{tx.type.toUpperCase()}</Text>
+                  </View>
+                  {/* Amount, currency, status */}
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={{ color: '#1a1a1a', fontWeight: 'bold', fontSize: 15 }}>{tx.amount} {tx.currency}</Text>
+                    <Text style={{ color: tx.status === 'completed' ? '#10b981' : '#f59e42', fontSize: 12, marginTop: 2 }}>{tx.status}</Text>
+                  </View>
+                  {/* Date right-aligned */}
+                  <Text style={{ color: '#64748b', fontSize: 12, textAlign: 'right', minWidth: 70 }}>{tx.createdAt}</Text>
+                </View>
+                {/* Divider except after last row */}
+                {idx !== filteredTransactions.length - 1 && <View style={{ height: 1, backgroundColor: '#ede7f6', marginVertical: 8 }} />}
               </View>
             ))
           )}
@@ -620,23 +625,31 @@ const styles = StyleSheet.create({
     width: 110, height: 110, borderRadius: 55, marginVertical: 8,
   },
   assetDistributionLegend: { color: '#64748b', fontSize: 12, marginTop: 4, textAlign: 'center' },
-  transactionsCard: {
-    borderRadius: 14,
-    marginHorizontal: 14,
-    marginTop: 18,
-    marginBottom: 32,
-    padding: 0,
-    elevation: 1,
+  // Modern transactions card styling
+  transactionsCardModern: {
+    // backgroundColor set inline for theme/palette
+    borderRadius: 18,
+    elevation: 2,
     shadowColor: '#3949ab',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
   },
-  transactionsTitle: { fontWeight: 'bold', color: '#1a237e', fontSize: 15, margin: 14, marginBottom: 0 },
-  transactionItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  transactionLabel: { fontWeight: 'bold', fontSize: 13, color: '#1a237e' },
-  transactionDate: { fontSize: 11, color: '#64748b' },
-  transactionAmount: { fontWeight: 'bold', fontSize: 13 },
+  transactionRowModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  txBadge: {
+    minWidth: 60,
+    borderRadius: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#e0f7fa',
+  },
 });
 
 export default WalletPage;

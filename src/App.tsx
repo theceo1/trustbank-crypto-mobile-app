@@ -17,6 +17,9 @@ import KycVerification from './pages/KycVerification';
 import VerificationPending from './pages/VerificationPending';
 import WalletPage from './pages/WalletPage';
 import TradePage from './pages/TradePage';
+import P2POffersList from './pages/P2POffersList';
+import OrderDetails from './pages/OrderDetails';
+import TradeRoom from './pages/TradeRoom';
 import Dashboard from './pages/Dashboard';  
 
 import CalculatorPage from './pages/CalculatorPage';
@@ -29,6 +32,12 @@ import VisionScreen from './pages/Vision';
 import FAQScreen from './pages/FAQ';
 import ContactScreen from './pages/Contact';
 import AppLayout from './components/AppLayout';
+
+export type P2PStackParamList = {
+  P2POffersList: undefined;
+  OrderDetails: { order: any };
+  TradeRoom: { trade: any };
+};
 
 const Stack = createNativeStackNavigator();
 const queryClient = new QueryClient();

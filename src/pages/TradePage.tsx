@@ -1,316 +1,210 @@
+//src/pages/TradePage.tsx
 import React, { useState } from "react";
-import { useNavigation } from "@react-navigation/native";
-import { Feather, FontAwesome5, MaterialIcons, AntDesign } from '@expo/vector-icons';
-import { View, Image, Text } from "react-native";
-import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { Picker } from '@react-native-picker/picker';
-import { Slider } from "@/components/ui/slider";
-// import BottomNavigation from "@/components/BottomNavigation";
-import { LineChart } from 'react-native-chart-kit';
-import * as shape from "d3-shape";
-import Svg, { LinearGradient as SvgLinearGradient, Stop, Defs } from "react-native-svg";
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import P2POffersList from './P2POffersList';
+import OrderDetails from './OrderDetails';
+import TradeRoom from './TradeRoom';
 
-const pairs = [
-  { pair: "BTC/USDT", price: "61,245.32", change: 2.4, iconUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
-  { pair: "ETH/USDT", price: "3,998.75", change: 4.2, iconUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { pair: "SOL/USDT", price: "132.56", change: -1.3, iconUrl: "https://cryptologos.cc/logos/solana-sol-logo.png" },
-  { pair: "ADA/USDT", price: "0.45", change: 1.2, iconUrl: "https://cryptologos.cc/logos/cardano-ada-logo.png" },
-  { pair: "XRP/USDT", price: "0.65", change: -0.8, iconUrl: "https://cryptologos.cc/logos/xrp-xrp-logo.png" },
-  { pair: "DOT/USDT", price: "7.82", change: 3.1, iconUrl: "https://cryptologos.cc/logos/polkadot-new-dot-logo.png" },
-];
-
-const mockChartData = [61000, 61200, 61100, 61400, 61350, 61500, 61700, 61900, 61800];
-
-import { useTheme } from '@/contexts/ThemeContext';
+// trustBank TradePage: simple tabbed UI (Swap, P2P, History)
 
 const TradePage = () => {
-  const { theme } = useTheme();
-  const navigation = useNavigation();
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPair, setSelectedPair] = useState("BTC/USDT");
-  const [tradeType, setTradeType] = useState("buy");
-  const [amount, setAmount] = useState(0);
-  const [timeRange, setTimeRange] = useState("day");
+  // Tab state
+  const [tab, setTab] = useState<'swap' | 'p2p' | 'history'>('swap');
+  // Swap state
+  const [fromCurrency] = useState('USDT');
+  const [toCurrency] = useState('BTC');
+  const [amount, setAmount] = useState('');
+  const [quote, setQuote] = useState<any>(null);
+  const [swapResult, setSwapResult] = useState<any>(null);
 
-  const currentPair = pairs.find(p => p.pair === selectedPair);
-  const maxAmount = tradeType === "buy" ? 1000 : 0.05;
+  // Amount currency selector
+  const [selectedAmountCurrency, setSelectedAmountCurrency] = useState<'Crypto' | 'NGN' | 'USD'>('Crypto');
 
-  const handleAmountChange = (newValue: number[]) => {
-    setAmount(newValue[0]);
+  // P2P UI state
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [activeTrade, setActiveTrade] = useState<any | null>(null);
+
+  // P2P and History dummy state for demo
+  const [selectedPair, setSelectedPair] = useState('BTC/USDT');
+  const [maxAmount] = useState(10); // Example max amount
+
+  // Handlers
+  const handleGetQuote = () => {
+    setQuote({ rate: '1 BTC = 60,000 USDT', fee: '0.1%', receive: '0.016 BTC' });
   };
-
-  const executeOrder = () => {
-    if (amount > 0) {
-      toast({
-        title: "Order Submitted",
-        description: `${tradeType === 'buy' ? 'Buy' : 'Sell'} order for ${amount} ${selectedPair.split('/')[0]} submitted`,
-      });
-    }
+  const handleConfirmSwap = () => {
+    setSwapResult({ success: true, message: 'Swap successful!' });
   };
-
-  // Filter pairs based on search query
-  const filteredPairs = pairs.filter(p => 
-    p.pair.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <>
       {/* Header */}
-      <View style={{ paddingTop: 40, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Button
-          style={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0, margin: 0 }}
-          onPress={() => navigation.navigate("Dashboard" as never)}
-        >
-          <Feather name="chevron-left" size={20} />
-        </Button>
-        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Trade</Text>
-        <Button style={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0, margin: 0 }} onPress={() => setTimeRange(prev => prev === "day" ? "week" : "day")}> 
-          <Feather name="refresh-cw" size={20} />
-        </Button>
+      <View style={{ paddingTop: 40, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#16a34a' }}>Welcome to trustBank Trading</Text>
+        <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center' }}>
+          Buy, sell, and swap crypto instantly with ease. Choose your preferred method below.
+        </Text>
       </View>
 
-      {/* Main Content */}
-      <View style={{ flex: 1, padding: 16 }}>
-        {/* Chart Section */}
-        <Card style={{ marginBottom: 24, padding: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Image 
-                source={{ uri: currentPair?.iconUrl }}
-                style={{ height: 32, width: 32, marginRight: 8, backgroundColor: theme.colors.background, borderRadius: 16, padding: 2 }}
+      {/* Tabs Row */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 18, marginBottom: 2 }}>
+        <TouchableOpacity onPress={() => setTab('swap')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'swap' ? '#16a34a' : 'transparent', paddingVertical: 12, backgroundColor: tab === 'swap' ? '#e6fbe8' : 'transparent' }}>
+          <Text style={{ color: tab === 'swap' ? '#16a34a' : '#64748b', fontWeight: '600', fontSize: 15 }}>Swap</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setTab('p2p')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'p2p' ? '#16a34a' : 'transparent', paddingVertical: 12, backgroundColor: tab === 'p2p' ? '#e6fbe8' : 'transparent' }}>
+          <Text style={{ color: tab === 'p2p' ? '#16a34a' : '#64748b', fontWeight: '600', fontSize: 15 }}>P2P</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setTab('history')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'history' ? '#16a34a' : 'transparent', paddingVertical: 12, backgroundColor: tab === 'history' ? '#e6fbe8' : 'transparent' }}>
+          <Text style={{ color: tab === 'history' ? '#16a34a' : '#64748b', fontWeight: '600', fontSize: 15 }}>History</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* --- Swap Tab --- */}
+      {tab === 'swap' && (
+        <ScrollView style={{ flex: 1 }}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Instant Swap</Text>
+            <Text style={{ color: '#64748b', fontSize: 13, marginBottom: 10 }}>
+              Quickly swap between cryptocurrencies or fiat. Enter the amount in your preferred currency.
+            </Text>
+            <Text style={styles.label}>From</Text>
+            <View style={styles.input}><Text style={{color:'#1a1a1a'}}>{fromCurrency}</Text></View>
+            <Text style={styles.label}>To</Text>
+            <View style={styles.input}><Text style={{color:'#1a1a1a'}}>{toCurrency}</Text></View>
+            <Text style={styles.label}>Amount</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <TextInput
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="numeric"
+                placeholder="Enter amount"
+                style={[styles.input, { flex: 1, marginBottom: 0 }]}
               />
-              <View>
-                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{selectedPair}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600' }}>${currentPair?.price}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
-                    {currentPair?.change && currentPair.change >= 0 ? (
-                      <Feather name="arrow-up" size={12} color="#10b981" style={{ marginRight: 4 }} />
-                    ) : (
-                      <Feather name="arrow-down" size={12} color="#ef4444" style={{ marginRight: 4 }} />
-                    )}
-                    <Text style={{ fontSize: 12, color: currentPair?.change && currentPair.change >= 0 ? '#10b981' : '#ef4444' }}>
-                      {currentPair?.change && currentPair.change >= 0 ? '+' : ''}{currentPair?.change}%
-                    </Text>
-                  </View>
-                </View>
+              <View style={{ marginLeft: 8, flexDirection: 'row', backgroundColor: '#f3f4f6', borderRadius: 8, overflow: 'hidden' }}>
+                {(['Crypto', 'NGN', 'USD'] as Array<'Crypto' | 'NGN' | 'USD'>).map(option => (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() => setSelectedAmountCurrency(option)}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 10,
+                      backgroundColor: selectedAmountCurrency === option ? '#16a34a' : 'transparent',
+                    }}
+                  >
+                    <Text style={{ color: selectedAmountCurrency === option ? '#fff' : '#1a1a1a', fontWeight: '600', fontSize: 14 }}>{option}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
-            <Picker
-              selectedValue={selectedPair}
-              onValueChange={setSelectedPair}
-              style={{ height: 48, width: '100%' }}
-            >
-              {pairs.map((pair) => (
-                <Picker.Item key={pair.pair} label={pair.pair} value={pair.pair} />
-              ))}
-            </Picker>
+            <TouchableOpacity style={styles.greenBtn} onPress={handleGetQuote}>
+              <Text style={styles.greenBtnText}>Get Quote</Text>
+            </TouchableOpacity>
+            {quote && (
+              <View style={styles.quoteBox}>
+                <Text style={styles.quoteText}>Rate: {quote.rate}</Text>
+                <Text style={styles.quoteText}>Fee: {quote.fee}</Text>
+                <Text style={styles.quoteText}>You Receive: {quote.receive}</Text>
+                <TouchableOpacity style={styles.greenBtn} onPress={handleConfirmSwap}>
+                  <Text style={styles.greenBtnText}>Confirm Swap</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            {swapResult && (
+              <Text style={{ color: swapResult.success ? '#16a34a' : '#ef4444', marginTop: 8 }}>{swapResult.message}</Text>
+            )}
           </View>
-          <View style={{ height: 180 }}>
-            <LineChart
-              data={{
-                labels: ["", "", "", "", "", "", "", "", ""],
-                datasets: [
-                  {
-                    data: mockChartData,
-                    color: () => theme.colors.primary, // optional, can use theme
-                    strokeWidth: 2,
-                  },
-                ],
-              }}
-              width={340} // or use Dimensions.get('window').width - padding
-              height={180}
-              withDots={false}
-              withShadow={false}
-              withInnerLines={true}
-              withOuterLines={false}
-              chartConfig={{
-                backgroundGradientFrom: theme.colors.background,
-                backgroundGradientTo: theme.colors.background,
-                color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`, // #10b981
-                labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-                propsForBackgroundLines: {
-                  strokeDasharray: '',
-                  stroke: '#e0e0e0',
-                },
-                propsForDots: {
-                  r: "0",
-                },
-              }}
-              bezier
-              style={{ borderRadius: 8 }}
-            />
-          </View>
-          <View style={{ flexDirection: 'row', marginTop: 16 }}>
-            <Button 
-              style={{ marginRight: 4, backgroundColor: timeRange === "day" ? theme.colors.primary : theme.colors.background, borderColor: '#10b981', borderWidth: 1 }}
-              onPress={() => setTimeRange("day")}
-            >
-              <Text style={{ color: timeRange === "day" ? theme.colors.background : theme.colors.primary }}>24H</Text>
-            </Button>
-            <Button 
-              style={{ marginRight: 4, backgroundColor: timeRange === "week" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
-              onPress={() => setTimeRange("week")}
-            >
-              <Text style={{ color: timeRange === "week" ? '#fff' : '#10b981' }}>1W</Text>
-            </Button>
-            <Button 
-              style={{ marginRight: 4, backgroundColor: timeRange === "month" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
-              onPress={() => setTimeRange("month")}
-            >
-              <Text style={{ color: timeRange === "month" ? '#fff' : '#10b981' }}>1M</Text>
-            </Button>
-            <Button 
-              style={{ backgroundColor: timeRange === "year" ? '#10b981' : '#fff', borderColor: '#10b981', borderWidth: 1 }}
-              onPress={() => setTimeRange("year")}
-            >
-              <Text style={{ color: timeRange === "year" ? '#fff' : '#10b981' }}>1Y</Text>
-            </Button>
-          </View>
-        </Card>
+        </ScrollView>
+      )}
 
-        {/* Trading Interface */}
-        <Tabs value="buy" onValueChange={setTradeType}>
-          <TabsList>
-            <TabsTrigger 
-              tabValue="buy" 
-              style={{ backgroundColor: tradeType === "buy" ? '#10b981' : '#fff', color: tradeType === "buy" ? '#fff' : '#10b981', flex: 1 }}
-            >
-              Buy
-            </TabsTrigger>
-            <TabsTrigger 
-              tabValue="sell" 
-              style={{ backgroundColor: tradeType === "sell" ? '#ef4444' : '#fff', color: tradeType === "sell" ? '#fff' : '#ef4444', flex: 1 }}
-            >
-              Sell
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent tabValue="buy">
-            <Card style={{ padding: 16 }}>
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Amount ({selectedPair.split('/')[0]})</Text>
-                <Input
-  value={amount.toString()}
-  onChangeText={text => setAmount(Number(text))}
-  keyboardType="numeric"
-  style={{}}
-/>
-                <Slider
-                  value={[amount]}
-                  max={maxAmount}
-                  step={0.001}
-                  onValueChange={handleAmountChange}
-                  style={{ marginVertical: 16 }}
-                />
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: 12, color: '#888' }}>Min: 0</Text>
-                  <Text style={{ fontSize: 12, color: '#888' }}>Max: {maxAmount}</Text>
-                </View>
-              </View>
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Estimated Cost (USDT)</Text>
-                <Text style={{ fontSize: 20, fontWeight: 'bold' }}>${(amount * Number(currentPair?.price.replace(',', ''))).toFixed(2)}</Text>
-              </View>
-              <Button 
-                style={{ width: '100%', backgroundColor: '#10b981' }}
-                onPress={executeOrder}
-                disabled={amount <= 0}
-              >
-                <Text style={{ color: '#fff' }}>Buy {selectedPair.split('/')[0]}</Text>
-              </Button>
-            </Card>
-          </TabsContent>
-          <TabsContent tabValue="sell">
-            <Card style={{ padding: 16, backgroundColor: theme.colors.card }}>
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Amount ({selectedPair.split('/')[0]})</Text>
-                <Input
-                  value={amount.toString()}
-                  onChangeText={text => setAmount(Number(text))}
-                  keyboardType="numeric"
-                  style={{}}
-                />
-                <Slider
-                  value={[amount]}
-                  max={maxAmount}
-                  step={0.001}
-                  onValueChange={handleAmountChange}
-                  style={{ marginVertical: 16 }}
-                />
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: 12, color: '#888' }}>Min: 0</Text>
-                  <Text style={{ fontSize: 12, color: '#888' }}>Max: {maxAmount}</Text>
-                </View>
-              </View>
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 14, color: '#888', marginBottom: 4 }}>Estimated Proceeds (USDT)</Text>
-                <Text style={{ fontSize: 20, fontWeight: 'bold' }}>${(amount * Number(currentPair?.price.replace(',', ''))).toFixed(2)}</Text>
-              </View>
-              <Button 
-                style={{ width: '100%', backgroundColor: '#ef4444' }}
-                onPress={executeOrder}
-                disabled={amount <= 0}
-              >
-                <Text style={{ color: '#fff' }}>Sell {selectedPair.split('/')[0]}</Text>
-              </Button>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Market Pairs */}
-        <View style={{ marginTop: 24 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Trading Pairs</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.card, borderRadius: 8, paddingHorizontal: 8 }}>
-              <Feather name="search" size={16} color="#888" style={{ marginRight: 4 }} />
-              <Input
-  style={{ height: 32, width: 120 }}
-  placeholder="Search..."
-  value={searchQuery}
-  onChangeText={setSearchQuery}
-/>
-            </View>
-          </View>
-          <Card style={{ backgroundColor: theme.colors.background, overflow: 'hidden' }}>
-            {filteredPairs.map((pair) => (
-              <View 
-                key={pair.pair} 
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: selectedPair === pair.pair ? '#f3f4f6' : '#fff' }}
-                onTouchEnd={() => setSelectedPair(pair.pair)}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image 
-                    source={{ uri: pair.iconUrl }} 
-                    style={{ height: 32, width: 32, marginRight: 12, backgroundColor: theme.colors.background, borderRadius: 16, padding: 2 }} 
-                  />
-                  <Text style={{ fontWeight: '500' }}>{pair.pair}</Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontWeight: '500' }}>${pair.price}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {pair.change >= 0 ? (
-                      <Feather name="arrow-up" size={12} color="#10b981" style={{ marginRight: 2 }} />
-                    ) : (
-                      <Feather name="arrow-down" size={12} color="#ef4444" style={{ marginRight: 2 }} />
-                    )}
-                    <Text style={{ fontSize: 12, color: pair.change >= 0 ? '#10b981' : '#ef4444' }}>
-                      {pair.change >= 0 ? '+' : ''}{pair.change}%
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </Card>
+      {/* --- P2P Tab --- */}
+      {tab === 'p2p' && (
+        <View style={styles.card}>
+          {/* P2P Trading Flow */}
+          {!selectedOrder && !activeTrade && (
+            <P2POffersList onSelectOrder={setSelectedOrder} />
+          )}
+          {selectedOrder && !activeTrade && (
+            <OrderDetails order={selectedOrder} onTradeCreated={trade => { setActiveTrade(trade); setSelectedOrder(null); }} onBack={() => setSelectedOrder(null)} />
+          )}
+          {activeTrade && (
+            <TradeRoom trade={activeTrade} onBack={() => setActiveTrade(null)} />
+          )}
         </View>
-      </View>
-      {/* <BottomNavigation /> */}
-    </View>
+      )}
+
+      {/* --- History Tab --- */}
+      {tab === 'history' && (
+        <ScrollView style={{ flex: 1 }}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Trade History (Coming Soon)</Text>
+            <Text style={{ color: '#64748b', marginTop: 8 }}>Your recent swaps and trades will appear here.</Text>
+          </View>
+        </ScrollView>
+      )}
+    </>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    // backgroundColor: '#fff', // Removed to support theme
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    padding: 18,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    shadowColor: '#16a34a',
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 12,
+  },
+  label: {
+    color: '#64748b',
+    fontSize: 13,
+    marginTop: 10,
+    marginBottom: 2,
+  },
+  input: {
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  greenBtn: {
+    backgroundColor: '#16a34a',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  greenBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  quoteBox: {
+    backgroundColor: '#e6fbe8',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  quoteText: {
+    color: '#1a1a1a',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+});
 
 export default TradePage;
