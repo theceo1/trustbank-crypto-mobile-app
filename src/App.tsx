@@ -60,7 +60,6 @@ function AuthNavigator() {
           <Stack.Screen name="KycVerification" children={() => <AppLayout><KycVerification /></AppLayout>} />
           <Stack.Screen name="VerificationPending" children={() => <AppLayout><VerificationPending /></AppLayout>} />
           <Stack.Screen name="Calculator" children={() => <AppLayout><CalculatorPage /></AppLayout>} />
-          <Stack.Screen name="TradeGuide" children={() => <AppLayout><TradeGuidePage /></AppLayout>} />
           <Stack.Screen name="Market" children={() => <AppLayout><MarketPage /></AppLayout>} />
           <Stack.Screen name="Blog" children={() => <AppLayout><BlogPage /></AppLayout>} />
           <Stack.Screen name="Mission" children={() => <AppLayout><MissionPage /></AppLayout>} />

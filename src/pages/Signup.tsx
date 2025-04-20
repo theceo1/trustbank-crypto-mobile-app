@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/toast";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,11 +25,11 @@ const Signup = () => {
 
   const { signUp } = useAuth();
   const navigation = useNavigation();
-  const { toast } = useToast();
+  const { showToast } = useToast();
 
   const handleSignup = async () => {
     if (password.length < 8) {
-      toast({
+      showToast({
         title: "Password Error",
         description: "Password must be at least 8 characters.",
         variant: "destructive",
@@ -37,7 +37,7 @@ const Signup = () => {
       return;
     }
     if (password !== confirmPassword) {
-      toast({
+      showToast({
         title: "Password Error",
         description: "Passwords do not match.",
         variant: "destructive",
@@ -46,7 +46,7 @@ const Signup = () => {
     }
 
     if (!agreedToTerms) {
-      toast({
+      showToast({
         title: "Terms Agreement Required",
         description: "You must agree to the terms and conditions to continue.",
         variant: "destructive",
@@ -60,13 +60,13 @@ const Signup = () => {
       const { data, error } = await signUp(email, password, fullName);
       
       if (error) {
-        toast({
+        showToast({
           title: "Signup Failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
-        toast({
+        showToast({
           title: "Account Created",
           description: "Check your email to verify your account.",
         });
@@ -74,7 +74,7 @@ const Signup = () => {
         navigation.navigate("kyc-intro" as never);
       }
     } catch (error) {
-      toast({
+      showToast({
         title: "Signup Failed",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
@@ -90,19 +90,19 @@ const Signup = () => {
       const { error } = await signInWithGoogle();
       
       if (error) {
-        toast({
+        showToast({
           title: "Google Signup Failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
-        toast({
+        showToast({
           title: "Account Created with Google",
           description: "Welcome to trustBank!",
         });
       }
     } catch (error) {
-      toast({
+      showToast({
         title: "Google Signup Failed",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",

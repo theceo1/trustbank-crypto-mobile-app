@@ -1,5 +1,5 @@
 //src/pages/WalletPage.tsx
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Modal, ActivityIndicator, FlatList, Image } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Modal, ActivityIndicator, FlatList, Image, useColorScheme } from "react-native";
 import { useTheme } from '@/contexts/ThemeContext';
 import { Feather } from "@expo/vector-icons";
 import React, { useState, useMemo, useEffect } from "react";
@@ -25,6 +25,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const WalletPage = () => {
   const { theme } = useTheme();
+  const colorScheme = useColorScheme(); // Detect dark/light mode
   const navigation = useNavigation();
   const [wallets, setWallets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,7 @@ const WalletPage = () => {
   const [showAllWallets, setShowAllWallets] = useState(false);
   const [modal, setModal] = useState<null | 'deposit' | 'withdraw' | 'receive' | 'send'>(null);
   const [selectedWallet, setSelectedWallet] = useState<any>(null);
+  
 
   // Sign out handler
   const handleSignOut = async () => {
@@ -69,26 +71,47 @@ const WalletPage = () => {
         if (userError || !user) throw new Error('Not authenticated');
 
         // 2. Fetch user profile (get quidax_id)
-        console.log('[WalletPage] About to query user_profiles for quidax_id. user.id:', user.id); // [DEBUG]
         const profileResult = await supabase
           .from('user_profiles')
           .select('quidax_id')
-          .eq('id', user.id)
-          .single();
-        console.log('[WalletPage] user_profiles query result:', JSON.stringify(profileResult)); // [DEBUG]
+          .eq('user_id', user.id)
+          .maybeSingle();
         const { data: profile, error: profileError } = profileResult;
-        console.log('[WalletPage] Supabase profile:', profile, profileError); // [DEBUG]
-        if (profileError || !profile?.quidax_id) throw new Error('No Quidax user ID');
+        if (profileError) {
+          setError('Could not load your profile. Please try again or contact support.');
+          setWallets([]);
+          setLoading(false);
+          console.error('[WalletPage] Error fetching user profile:', profileError, 'user id:', user.id);
+          return;
+        }
+        if (!profile) {
+          setError('Unable to locate your trustBank profile. Please contact support.');
+          setWallets([]);
+          setLoading(false);
+          console.error('[WalletPage] No user profile found for Supabase user id:', user.id);
+          return;
+        }
+        if (!profile.quidax_id) {
+          setError('A required identifier is missing from your trustBank profile. Please contact support.');
+          setWallets([]);
+          setLoading(false);
+          console.error('[WalletPage] quidax_id missing in profile for Supabase user id:', user.id);
+          return;
+        }
 
-        // 3. Fetch wallets for this Quidax user
-        console.log('[WalletPage] About to call quidax.getWalletsForUser with quidax_id:', profile.quidax_id); // [DEBUG]
-        const res = await quidax.getWalletsForUser(profile.quidax_id);
-        console.log('[WalletPage] Quidax wallets response:', JSON.stringify(res)); // [DEBUG]
-        if (!res || !res.data) throw new Error('No wallets returned from Quidax');
-        setWallets(res.data);
-        console.log('[WalletPage] setWallets called with:', JSON.stringify(res.data)); // [DEBUG]
+        // 3. Fetch wallets for this user
+        try {
+          // Fetch wallets using quidax_id from profile
+          const res = await quidax.getWalletsForUser(profile.quidax_id);
+          if (!res || !res.data) throw new Error('No wallets returned');
+          setWallets(res.data);
+        } catch (walletErr) {
+          setError('Unable to load your wallets. Please try again.');
+          setWallets([]);
+          console.error('[WalletPage] Error fetching wallets for quidax_id:', profile.quidax_id, walletErr);
+        }
       } catch (e: any) {
-        console.error('[WalletPage] fetchWallets error:', e); // [DEBUG]
+        console.error('[WalletPage] fetchWallets error:', e);
         setError('Failed to load wallets.');
       } finally {
         setLoading(false);
@@ -211,38 +234,89 @@ const WalletPage = () => {
 
         {/* Wallet List */}
         <View style={styles.walletsList}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#10b981" style={{ marginVertical: 30 }} />
-          ) : error ? (
-            <Text style={{ color: 'red', textAlign: 'center', margin: 18 }}>{error}</Text>
-          ) : (
-            (showAllWallets ? wallets : wallets.slice(0, 6)).map(wallet => (
-              <View key={wallet.id} style={styles.walletCardModern}>
-                <View style={styles.walletCardLeft}>
-                  <Image source={{ uri: wallet.icon_url || wallet.iconUrl || 'https://cryptologos.cc/logos/generic-crypto.png' }} style={styles.walletIcon} />
-                  <View>
-                    <Text style={styles.walletCurrencyModern}>{wallet.currency?.toUpperCase()}</Text>
-                    <Text style={styles.walletName}>{wallet.name || wallet.currency}</Text>
-                  </View>
-                </View>
-                <View style={styles.walletCardRight}>
-                  <Text style={styles.walletBalanceModern}>{parseFloat(wallet.balance).toLocaleString()}</Text>
-                  <Text style={styles.walletEstValueModern}>₦{parseFloat(wallet.fiat_value || wallet.fiatValue || 0).toLocaleString()}</Text>
-                  <View style={styles.walletActionsRowModern}>
-                    <TouchableOpacity style={styles.walletActionBtnModern} onPress={() => { setSelectedWallet(wallet); setModal('receive'); }}>
-                      <Feather name="arrow-down-left" size={16} color="#10b981" />
-                      <Text style={styles.walletActionTextModern}>Receive</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.walletActionBtnModern} onPress={() => { setSelectedWallet(wallet); setModal('send'); }}>
-                      <Feather name="arrow-up-right" size={16} color="#f43f5e" />
-                      <Text style={styles.walletActionTextModern}>Send</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+  {loading ? (
+    <ActivityIndicator size="large" color="#10b981" style={{ marginVertical: 30 }} />
+  ) : error ? (
+    <Text style={{ color: 'red', textAlign: 'center', margin: 18 }}>{error}</Text>
+  ) : (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      {(showAllWallets ? wallets : wallets.slice(0, 6)).map((wallet, idx) => {
+        // Debug: log wallet object and idx
+        console.log('WALLET DEBUG', idx, wallet);
+
+        // Color palette for cards (separate for light/dark theme)
+        // These colors are chosen for vibrance and theme contrast
+        const cardColors = colorScheme === 'dark'
+          ? [
+              '#232946', // dark blue
+              '#3a3b5a', // deep indigo
+              '#2d3a3a', // teal
+              '#33334d', // purple
+              '#1a2a2a', // greenish
+              theme.colors.card, // fallback theme card
+            ]
+          : [
+              theme.colors.card,
+              '#e0f7fa', // cyan
+              '#fce4ec', // pink
+              '#f3e8ff', // purple
+              '#fffde7', // yellow
+              '#e8f5e9', // green
+            ];
+        let bgColor = cardColors[idx % cardColors.length]; // rotate palette for variety
+        // In dark mode, if the card color is theme.colors.card (likely black), override to visible dark gray
+        if (colorScheme === 'dark' && bgColor === theme.colors.card) {
+          bgColor = '#232946'; // visible dark blue-gray for default cards in dark mode
+        }
+        return (
+          <View
+            key={wallet.id}
+            style={[
+              styles.walletCardGrid,
+              {
+                backgroundColor: bgColor,
+                width: '48%',
+                marginBottom: 14,
+                marginRight: idx % 2 === 0 ? '4%' : 0,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            {/* Removed wallet icon for a cleaner look as requested */}
+            <View style={styles.walletCardLeft}>
+              <View>
+                {/* In dark mode, force all card text to pure white for readability */}
+                {/* Explicit contrast: #fff for dark mode, #1a1a1a for light mode */}
+                {/* Explicitly force text color for currency and name for maximum contrast */}
+                {/* Always use dark text for maximum contrast on all card backgrounds */}
+                <Text style={[styles.walletCurrencyModern, { color: '#1a1a1a' }]}>{wallet.currency?.toUpperCase()}</Text>
+                <Text style={[styles.walletName, { color: '#1a1a1a' }]}>{wallet.name || wallet.currency}</Text>
               </View>
-            ))
-          )}
-        </View>
+            </View>
+            <View style={styles.walletCardRight}>
+              {/* In dark mode, force all card text to pure white for readability */}
+              {/* Always use dark text for maximum contrast on all card backgrounds */}
+              <Text style={[styles.walletBalanceModern, { color: '#1a1a1a' }]}>{parseFloat(wallet.balance).toLocaleString()}</Text>
+              <Text style={[styles.walletEstValueModern, { color: '#1a1a1a' }]}>₦{parseFloat(wallet.fiat_value || wallet.fiatValue || 0).toLocaleString()}</Text>
+              <View style={styles.walletActionsRowModern}>
+                {/* In dark mode, set button backgrounds to #394867 and text to white for contrast */}
+                {/* Button backgrounds: #394867 (dark), #e0e7ff (light); text always dark for contrast */}
+                <TouchableOpacity style={[styles.walletActionBtnModern, { backgroundColor: colorScheme === 'dark' ? '#394867' : '#e0e7ff' }]} onPress={() => { setSelectedWallet(wallet); setModal('receive'); }}>
+                  <Feather name="arrow-down-left" size={16} color="#10b981" />
+                  <Text style={[styles.walletActionTextModern, { color: '#1a1a1a' }]}>Receive</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.walletActionBtnModern, { backgroundColor: colorScheme === 'dark' ? '#394867' : '#e0e7ff' }]} onPress={() => { setSelectedWallet(wallet); setModal('send'); }}>
+                  <Feather name="arrow-up-right" size={16} color="#f43f5e" />
+                  <Text style={[styles.walletActionTextModern, { color: '#1a1a1a' }]}>Send</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  )}
+</View>
 
         {/* Transactions Card */}
         <View style={styles.transactionsCard}>
@@ -326,19 +400,17 @@ const styles = StyleSheet.create({
   },
 
   // --- Modern Wallet Card Styles ---
-  walletCardModern: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  walletCardGrid: {
+    flexDirection: 'column',
     borderRadius: 16,
-    backgroundColor: '#fff',
-    marginBottom: 12,
-    padding: 16,
+    // backgroundColor set inline for theme/palette
+    padding: 14,
     elevation: 2,
     shadowColor: '#1a237e',
     shadowOpacity: 0.07,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
+    borderWidth: 1,
   },
   walletCardLeft: {
     flexDirection: 'row',
@@ -355,11 +427,11 @@ const styles = StyleSheet.create({
   walletCurrencyModern: {
     fontWeight: 'bold',
     fontSize: 15,
-    color: '#1a237e',
+    // color removed; set via inline style for theme contrast
   },
   walletName: {
     fontSize: 12,
-    color: '#64748b',
+    // color removed; set via inline style for theme contrast
     fontStyle: 'italic',
   },
   walletCardRight: {

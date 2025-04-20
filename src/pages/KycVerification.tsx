@@ -1,8 +1,7 @@
-
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Button from "@/components/ui/button";
-import { toast, useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Picker } from '@react-native-picker/picker';
 import { useState } from "react";
@@ -10,6 +9,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 
 const KycVerification = ({ navigation }: any) => {
   const { theme } = useTheme();
+  const { showToast } = useToast();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("id-verification");
   const [idType, setIdType] = useState("passport");
@@ -37,7 +37,7 @@ const KycVerification = ({ navigation }: any) => {
         case "back": setBackUploaded(true); break;
         case "address": setAddressUploaded(true); break;
       }
-      toast({
+      showToast({
         title: "File uploaded",
         description: "Your document has been uploaded successfully.",
       });

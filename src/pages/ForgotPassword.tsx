@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/toast";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import Logo from "@/components/Logo";
@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from "@/contexts/ThemeContext";
 
 const ForgotPassword = () => {
+  const { showToast } = useToast();
   const { theme } = useTheme();
   const styles = StyleSheet.create({
     bg: {
@@ -90,19 +91,18 @@ const ForgotPassword = () => {
   const [sent, setSent] = useState(false);
   const navigation = useNavigation();
   const { resetPassword } = useAuth();
-  const { toast } = useToast();
-
+  
   const handleSubmit = async () => {
     setLoading(true);
     try {
       await resetPassword(email);
       setSent(true);
-      toast({
+      showToast({
         title: "Reset Email Sent",
         description: "Check your inbox for password reset instructions.",
       });
     } catch (error: any) {
-      toast({
+      showToast({
         title: "Error",
         description: error.message || "Failed to send reset email.",
         variant: "destructive",

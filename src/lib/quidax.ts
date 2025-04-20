@@ -36,6 +36,9 @@ class QuidaxClient {
   }
 
   private getHeaders() {
+    if (!this.config.apiKey) {
+      console.error('[QuidaxClient] Missing API key! Set QUIDAX_PUBLIC_KEY in your environment.');
+    }
     return {
       "Authorization": `Bearer ${this.config.apiKey}`,
       "Content-Type": "application/json",
@@ -151,12 +154,13 @@ class QuidaxClient {
     }
   }
 
-  async getWallets() {
-    // Deprecated: Only use for parent accounts
-    // Use getWalletsForUser for sub-accounts
-  }
-
   async getWalletsForUser(userId: string) {
+    if (!this.config.apiUrl) {
+      throw new Error('[QuidaxClient] Missing API URL! Set QUIDAX_API_URL in your environment.');
+    }
+    if (!this.config.apiKey) {
+      throw new Error('[QuidaxClient] Missing API key! Set QUIDAX_PUBLIC_KEY in your environment.');
+    }
     const url = `${this.config.apiUrl}/users/${userId}/wallets`;
     const headers = this.getHeaders();
     console.log('[Quidax] Fetching wallets for user', { url, headers });
@@ -388,8 +392,9 @@ class QuidaxClient {
   }
 }
 
+// NOTE: For production, QUIDAX_API_URL and QUIDAX_PUBLIC_KEY must be set in your environment variables or app config.
 export const quidax = new QuidaxClient({
-  apiKey: env.QUIDAX_PUBLIC_KEY,
+  apiKey: env.QUIDAX_SECRET_KEY, // Use secret key for Authorization
   secretKey: env.QUIDAX_SECRET_KEY,
   apiUrl: env.QUIDAX_API_URL,
   webhookSecret: env.QUIDAX_WEBHOOK_SECRET,
