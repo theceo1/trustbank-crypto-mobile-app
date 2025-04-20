@@ -1,7 +1,11 @@
 //src/pages/TradePage.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 import { Feather } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { P2PStackParamList } from '../App';
 import P2POffersList from './P2POffersList';
 import OrderDetails from './OrderDetails';
 import TradeRoom from './TradeRoom';
@@ -9,6 +13,7 @@ import TradeRoom from './TradeRoom';
 // trustBank TradePage: simple tabbed UI (Swap, P2P, History)
 
 const TradePage = () => {
+  const { theme } = useTheme();
   // Tab state
   const [tab, setTab] = useState<'swap' | 'p2p' | 'history'>('swap');
   // Swap state
@@ -25,6 +30,15 @@ const TradePage = () => {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [activeTrade, setActiveTrade] = useState<any | null>(null);
 
+  const navigation = useNavigation<NativeStackNavigationProp<P2PStackParamList>>();
+
+  useEffect(() => {
+    if (selectedOrder && !activeTrade) {
+      navigation.navigate('OrderDetails', { order: selectedOrder });
+      setSelectedOrder(null);
+    }
+  }, [selectedOrder, activeTrade, navigation]);
+
   // P2P and History dummy state for demo
   const [selectedPair, setSelectedPair] = useState('BTC/USDT');
   const [maxAmount] = useState(10); // Example max amount
@@ -38,80 +52,77 @@ const TradePage = () => {
   };
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {/* Header */}
-      <View style={{ paddingTop: 40, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#16a34a' }}>Welcome to trustBank Trading</Text>
-        <Text style={{ fontSize: 15, color: '#64748b', textAlign: 'center' }}>
+      <View style={{ paddingTop: 40, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.background }}>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: theme.colors.brandGreen }}>Welcome to trustBank Trading</Text>
+        <Text style={{ fontSize: 15, color: theme.colors.secondaryText, textAlign: 'center' }}>
           Buy, sell, and swap crypto instantly with ease. Choose your preferred method below.
         </Text>
       </View>
 
       {/* Tabs Row */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 18, marginBottom: 2 }}>
-        <TouchableOpacity onPress={() => setTab('swap')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'swap' ? '#16a34a' : 'transparent', paddingVertical: 12, backgroundColor: tab === 'swap' ? '#e6fbe8' : 'transparent' }}>
-          <Text style={{ color: tab === 'swap' ? '#16a34a' : '#64748b', fontWeight: '600', fontSize: 15 }}>Swap</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 18, marginBottom: 2, backgroundColor: theme.colors.background }}>
+        <TouchableOpacity onPress={() => setTab('swap')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'swap' ? theme.colors.brandGreen : 'transparent', paddingVertical: 12, backgroundColor: tab === 'swap' ? theme.colors.card : 'transparent' }}>
+          <Text style={{ color: tab === 'swap' ? theme.colors.brandGreen : theme.colors.secondaryText, fontWeight: '600', fontSize: 15 }}>Swap</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setTab('p2p')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'p2p' ? '#16a34a' : 'transparent', paddingVertical: 12, backgroundColor: tab === 'p2p' ? '#e6fbe8' : 'transparent' }}>
-          <Text style={{ color: tab === 'p2p' ? '#16a34a' : '#64748b', fontWeight: '600', fontSize: 15 }}>P2P</Text>
+        <TouchableOpacity onPress={() => setTab('p2p')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'p2p' ? theme.colors.brandGreen : 'transparent', paddingVertical: 12, backgroundColor: tab === 'p2p' ? theme.colors.card : 'transparent' }}>
+          <Text style={{ color: tab === 'p2p' ? theme.colors.brandGreen : theme.colors.secondaryText, fontWeight: '600', fontSize: 15 }}>P2P</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setTab('history')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'history' ? '#16a34a' : 'transparent', paddingVertical: 12, backgroundColor: tab === 'history' ? '#e6fbe8' : 'transparent' }}>
-          <Text style={{ color: tab === 'history' ? '#16a34a' : '#64748b', fontWeight: '600', fontSize: 15 }}>History</Text>
+        <TouchableOpacity onPress={() => setTab('history')} style={{ flex: 1, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: tab === 'history' ? theme.colors.brandGreen : 'transparent', paddingVertical: 12, backgroundColor: tab === 'history' ? theme.colors.card : 'transparent' }}>
+          <Text style={{ color: tab === 'history' ? theme.colors.brandGreen : theme.colors.secondaryText, fontWeight: '600', fontSize: 15 }}>History</Text>
         </TouchableOpacity>
       </View>
 
       {/* --- Swap Tab --- */}
       {tab === 'swap' && (
-        <ScrollView style={{ flex: 1 }}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Instant Swap</Text>
-            <Text style={{ color: '#64748b', fontSize: 13, marginBottom: 10 }}>
-              Quickly swap between cryptocurrencies or fiat. Enter the amount in your preferred currency.
-            </Text>
-            <Text style={styles.label}>From</Text>
-            <View style={styles.input}><Text style={{color:'#1a1a1a'}}>{fromCurrency}</Text></View>
-            <Text style={styles.label}>To</Text>
-            <View style={styles.input}><Text style={{color:'#1a1a1a'}}>{toCurrency}</Text></View>
-            <Text style={styles.label}>Amount</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-              <TextInput
-                value={amount}
-                onChangeText={setAmount}
-                keyboardType="numeric"
-                placeholder="Enter amount"
-                style={[styles.input, { flex: 1, marginBottom: 0 }]}
-              />
-              <View style={{ marginLeft: 8, flexDirection: 'row', backgroundColor: '#f3f4f6', borderRadius: 8, overflow: 'hidden' }}>
-                {(['Crypto', 'NGN', 'USD'] as Array<'Crypto' | 'NGN' | 'USD'>).map(option => (
-                  <TouchableOpacity
-                    key={option}
-                    onPress={() => setSelectedAmountCurrency(option)}
-                    style={{
-                      paddingVertical: 8,
-                      paddingHorizontal: 10,
-                      backgroundColor: selectedAmountCurrency === option ? '#16a34a' : 'transparent',
-                    }}
-                  >
-                    <Text style={{ color: selectedAmountCurrency === option ? '#fff' : '#1a1a1a', fontWeight: '600', fontSize: 14 }}>{option}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+            <Text style={[styles.label, { color: theme.colors.secondaryText }]}>From</Text>
+            <View style={[styles.input, { backgroundColor: theme.colors.background }]}><Text style={{color: theme.colors.text}}>{fromCurrency}</Text></View>
+            <Text style={[styles.label, { color: theme.colors.secondaryText }]}>To</Text>
+            <View style={[styles.input, { backgroundColor: theme.colors.background }]}><Text style={{color: theme.colors.text}}>{toCurrency}</Text></View>
+            <Text style={[styles.label, { color: theme.colors.secondaryText }]}>Amount</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text }]}
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="numeric"
+              placeholder="Enter amount"
+              placeholderTextColor={theme.colors.secondaryText}
+            />
+            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+              {(['Crypto', 'NGN', 'USD'] as Array<'Crypto' | 'NGN' | 'USD'>).map(option => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setSelectedAmountCurrency(option)}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 10,
+                    backgroundColor: selectedAmountCurrency === option ? theme.colors.brandGreen : 'transparent',
+                    borderRadius: 8,
+                    marginRight: 6,
+                  }}
+                >
+                  <Text style={{ color: selectedAmountCurrency === option ? '#fff' : theme.colors.text, fontWeight: '600', fontSize: 14 }}>{option}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <TouchableOpacity style={styles.greenBtn} onPress={handleGetQuote}>
+            <TouchableOpacity style={[styles.greenBtn, { backgroundColor: theme.colors.brandGreen }]} onPress={handleGetQuote}>
               <Text style={styles.greenBtnText}>Get Quote</Text>
             </TouchableOpacity>
             {quote && (
-              <View style={styles.quoteBox}>
-                <Text style={styles.quoteText}>Rate: {quote.rate}</Text>
-                <Text style={styles.quoteText}>Fee: {quote.fee}</Text>
-                <Text style={styles.quoteText}>You Receive: {quote.receive}</Text>
-                <TouchableOpacity style={styles.greenBtn} onPress={handleConfirmSwap}>
+              <View style={[styles.quoteBox, { backgroundColor: theme.colors.card }]}> 
+                <Text style={[styles.quoteText, { color: theme.colors.text }]}>{quote.rate}</Text>
+                <Text style={[styles.quoteText, { color: theme.colors.text }]}>Fee: {quote.fee}</Text>
+                <Text style={[styles.quoteText, { color: theme.colors.text }]}>You receive: {quote.receive}</Text>
+                <TouchableOpacity style={[styles.greenBtn, { backgroundColor: theme.colors.brandGreen }]} onPress={handleConfirmSwap}>
                   <Text style={styles.greenBtnText}>Confirm Swap</Text>
                 </TouchableOpacity>
               </View>
             )}
             {swapResult && (
-              <Text style={{ color: swapResult.success ? '#16a34a' : '#ef4444', marginTop: 8 }}>{swapResult.message}</Text>
+              <Text style={{ color: swapResult.success ? theme.colors.brandGreen : '#e74c3c', marginTop: 10 }}>{swapResult.message}</Text>
             )}
           </View>
         </ScrollView>
@@ -119,36 +130,30 @@ const TradePage = () => {
 
       {/* --- P2P Tab --- */}
       {tab === 'p2p' && (
-        <View style={styles.card}>
-          {/* P2P Trading Flow */}
-          {!selectedOrder && !activeTrade && (
-            <P2POffersList onSelectOrder={setSelectedOrder} />
-          )}
-          {selectedOrder && !activeTrade && (
-            <OrderDetails order={selectedOrder} onTradeCreated={trade => { setActiveTrade(trade); setSelectedOrder(null); }} onBack={() => setSelectedOrder(null)} />
-          )}
-          {activeTrade && (
-            <TradeRoom trade={activeTrade} onBack={() => setActiveTrade(null)} />
-          )}
+        <View style={{ flex: 1 }}>
+          <P2POffersList onSelectOrder={setSelectedOrder} />
         </View>
       )}
 
       {/* --- History Tab --- */}
       {tab === 'history' && (
-        <ScrollView style={{ flex: 1 }}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Trade History (Coming Soon)</Text>
-            <Text style={{ color: '#64748b', marginTop: 8 }}>Your recent swaps and trades will appear here.</Text>
-          </View>
-        </ScrollView>
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Trade History</Text>
+          <Text style={{ color: theme.colors.secondaryText, textAlign: 'center', marginTop: 10 }}>No trades yet.</Text>
+          <Text style={{ color: theme.colors.secondaryText, marginTop: 8 }}>Your recent swaps and trades will appear here.</Text>
+        </View>
       )}
-    </>
+
+      {/* --- Trade Room Modal --- */}
+      {activeTrade && (
+        <TradeRoom trade={activeTrade} onBack={() => setActiveTrade(null)} />
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    // backgroundColor: '#fff', // Removed to support theme
     backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 18,

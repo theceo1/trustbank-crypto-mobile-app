@@ -6,13 +6,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { P2PStackParamList } from '../App';
 
-type OrderDetailsProps = {
-  order: any;
-  onTradeCreated: (trade: any) => void;
-  onBack: () => void;
-};
+type OrderDetailsScreenNavigationProp = NativeStackNavigationProp<P2PStackParamList, 'OrderDetails'>;
+type OrderDetailsScreenRouteProp = RouteProp<P2PStackParamList, 'OrderDetails'>;
 
-const OrderDetails: React.FC<OrderDetailsProps> = ({ order, onTradeCreated, onBack }) => {
+const OrderDetails: React.FC = () => {
+  const navigation = useNavigation<OrderDetailsScreenNavigationProp>();
+  const route = useRoute<OrderDetailsScreenRouteProp>();
+  const { order } = route.params;
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +40,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order, onTradeCreated, onBa
     if (error) {
       Alert.alert('Failed to initiate trade', error.message);
     } else {
-      onTradeCreated(data);
+      // Navigate to TradeRoom with the created trade
+      navigation.replace('TradeRoom', { trade: data });
     }
   };
 
@@ -57,7 +58,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order, onTradeCreated, onBa
         style={styles.input}
       />
       <Button title="Initiate Trade" onPress={initiateTrade} disabled={loading} />
-      <Button title="Back" onPress={onBack} color="#64748b" />
+      <Button title="Back" onPress={() => navigation.goBack()} color="#64748b" />
     </View>
   );
 };

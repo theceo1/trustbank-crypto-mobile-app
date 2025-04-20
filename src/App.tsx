@@ -39,6 +39,8 @@ export type P2PStackParamList = {
   TradeRoom: { trade: any };
 };
 
+import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+
 const Stack = createNativeStackNavigator();
 const queryClient = new QueryClient();
 
@@ -75,6 +77,11 @@ function AuthNavigator() {
           <Stack.Screen name="Vision" children={() => <AppLayout><VisionScreen /></AppLayout>} />
           <Stack.Screen name="FAQ" children={() => <AppLayout><FAQScreen /></AppLayout>} />
           <Stack.Screen name="Contact" children={() => <AppLayout><ContactScreen /></AppLayout>} />
+
+          {/* P2P Trading Screens */}
+          <Stack.Screen name="P2POffersList" children={() => <AppLayout><P2POffersList /></AppLayout>} />
+          <Stack.Screen name="OrderDetails" component={OrderDetails} />
+          <Stack.Screen name="TradeRoom" component={TradeRoom} />
         </>
       ) : (
         <>

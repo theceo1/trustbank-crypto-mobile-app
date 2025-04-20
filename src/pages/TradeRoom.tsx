@@ -1,3 +1,4 @@
+//src/pages/TradeRoom.tsx
 import React, { useState } from 'react';
 import { View, Text, Button, TextInput, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
