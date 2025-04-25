@@ -1,4 +1,4 @@
-
+//src/pages/KycIntro.tsx
 import React from "react";
 import { View, Text, ScrollView, SafeAreaView, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -75,24 +75,113 @@ const KycIntro = ({ navigation }: any) => {
     },
   });
 
-  // Feather icon names: file-text, shield, credit-card
-  const steps = [
+  // KYC Tiers - copy from TradeGuidePage for consistency
+  const KYC_TIERS = [
     {
-      title: "Identity Verification",
-      description: "Verify your identity using a government-issued ID",
-      icon: "file-text",
+      key: 'basic',
+      name: 'Basic',
+      icon: 'shield',
+      requirements: [
+        'Email Verification',
+        'Phone Number Verification',
+        'Basic Personal Information',
+      ],
+      features: [
+        'Basic trading features',
+        'Limited trading volume',
+        'Basic support',
+      ],
+      limits: {
+        daily: 100,
+        monthly: 1000,
+        withdrawal: 200,
+      },
     },
     {
-      title: "Biometric Verification",
-      description: "Complete a quick face scan to confirm your identity",
-      icon: "shield",
+      key: 'starter',
+      name: 'Starter',
+      icon: 'star',
+      requirements: [
+        'All Basic Tier Requirements',
+        'NIN Verification',
+        'Selfie Verification',
+      ],
+      features: [
+        'Increased trading limits',
+        'Priority support',
+        'Access to OTC trading',
+      ],
+      limits: {
+        daily: 500,
+        monthly: 5000,
+        withdrawal: 1000,
+      },
     },
     {
-      title: "Wallet Setup",
-      description: "Set up your crypto wallet to start transacting",
-      icon: "credit-card",
+      key: 'intermediate',
+      name: 'Intermediate',
+      icon: 'arrow-up-right',
+      requirements: [
+        'All Starter Tier Requirements',
+        'BVN Verification',
+      ],
+      features: [
+        'Higher trading limits',
+        'Lower trading fees',
+        'Dedicated support line',
+      ],
+      limits: {
+        daily: 2000,
+        monthly: 20000,
+        withdrawal: 5000,
+      },
+    },
+    {
+      key: 'advanced',
+      name: 'Advanced',
+      icon: 'lock',
+      requirements: [
+        'All Intermediate Tier Requirements',
+        'LiveCheck Verification',
+      ],
+      features: [
+        'Premium trading limits',
+        'VIP support',
+        'Advanced trading tools',
+        'Exclusive market insights',
+      ],
+      limits: {
+        daily: 10000,
+        monthly: 100000,
+        withdrawal: 20000,
+      },
+    },
+    {
+      key: 'premium',
+      name: 'Premium',
+      icon: 'crown',
+      requirements: [
+        'All Advanced Tier Requirements',
+        'Government-issued ID',
+        'International Passport',
+      ],
+      features: [
+        'Highest trading limits',
+        'Lowest trading fees',
+        'Dedicated account manager',
+        'Premium support',
+        'Advanced trading features',
+        'Early access to new features',
+      ],
+      limits: {
+        daily: 50000,
+        monthly: 500000,
+        withdrawal: 100000,
+      },
     },
   ];
+
+  const formatCurrency = (amount: number) => `$${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
   const handleStartKyc = () => {
     // Replace this with your navigation logic
@@ -102,34 +191,37 @@ const KycIntro = ({ navigation }: any) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafd' }}>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }}>
-        {/* Header */}
-        <View style={{ alignItems: 'center', marginBottom: 32, marginTop: 16 }}>
-          <Logo size="lg" />
-          <Text style={styles.title}>Complete Your Profile</Text>
-          <Text style={styles.subtitle}>
-            Just a few quick steps to verify your identity and start using trustBank
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120, backgroundColor: theme.colors.background }}>
+        {/* KYC Tiers Overview */}
+        <View style={{ maxWidth: 480, alignSelf: 'center', width: '100%' }}>
+          <Text style={[styles.title, { marginBottom: 8, color: theme.colors.text }]}>KYC Verification Tiers</Text>
+          <Text style={[styles.subtitle, { color: theme.colors.secondaryText }]}>
+            Unlock more features and higher limits as you progress through our verification tiers. Complete each tier to increase your trading power and access premium benefits.
           </Text>
-        </View>
-
-        {/* Steps */}
-        <View style={{ maxWidth: 420, alignSelf: 'center', width: '100%' }}>
-          {steps.map((step, index) => (
-            <View
-              key={index}
-              style={[styles.stepCard, { opacity: 1, marginBottom: 18 }]}
-            >
-              <View style={styles.stepIconWrap}>
-                <Feather name={step.icon as any} size={28} color="#3949ab" />
+          {KYC_TIERS.map((tier, idx) => {
+            const cardBg = theme.colors.card || '#fff';
+            const borderCol = theme.colors.border || '#e5e7eb';
+            return (
+              <View key={tier.key} style={[styles.stepCard, { marginBottom: 18, backgroundColor: cardBg, borderColor: borderCol }]}>  
+                <View style={[styles.stepIconWrap, { backgroundColor: theme.colors.background }] }>
+                  <Feather name={tier.icon as any} size={28} color={theme.colors.primary || '#3949ab'} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.stepTitle, { color: theme.colors.text }]}>{tier.name}</Text>
+                  <Text style={[styles.stepDesc, { color: theme.colors.secondaryText }]}>{tier.features.join(' • ')}</Text>
+                  <Text style={[styles.stepDesc, { marginTop: 6, fontWeight: 'bold', color: theme.colors.secondaryText }]}>Requirements:</Text>
+                  {tier.requirements.map((req, i) => (
+                    <Text key={i} style={[styles.stepDesc, { marginLeft: 8, color: theme.colors.secondaryText }]}>• {req}</Text>
+                  ))}
+                  <Text style={[styles.stepDesc, { marginTop: 6, fontWeight: 'bold', color: theme.colors.secondaryText }]}>Trading Limits:</Text>
+                  <Text style={[styles.stepDesc, { marginLeft: 8, color: theme.colors.secondaryText }]}>Daily: {formatCurrency(tier.limits.daily)}</Text>
+                  <Text style={[styles.stepDesc, { marginLeft: 8, color: theme.colors.secondaryText }]}>Monthly: {formatCurrency(tier.limits.monthly)}</Text>
+                  <Text style={[styles.stepDesc, { marginLeft: 8, color: theme.colors.secondaryText }]}>Withdrawal: {formatCurrency(tier.limits.withdrawal)}</Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepDesc}>{step.description}</Text>
-              </View>
-              <Feather name="check-circle" size={22} color="#bbb" style={{ opacity: 0.5, marginLeft: 8 }} />
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* Info */}

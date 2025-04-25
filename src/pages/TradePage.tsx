@@ -1,54 +1,156 @@
 //src/pages/TradePage.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { quidax } from '../lib/quidax';
+import { supabase } from '../lib/supabase';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { P2PStackParamList } from '../App';
 import P2POffersList from './P2POffersList';
 import OrderDetails from './OrderDetails';
-import TradeRoom from './TradeRoom';
+import { Modal, TouchableOpacity, FlatList } from 'react-native';
+// import TradeRoom from './TradeRoom'; // No longer rendered directly
 
 // trustBank TradePage: simple tabbed UI (Swap, P2P, History)
 
+type TradePageRouteParams = {
+  initialTab?: 'swap' | 'p2p' | 'history';
+};
+
 const TradePage = () => {
+  // Only declare these ONCE
+  const navigation = useNavigation();
+  const route = useRoute<RouteProp<{ params: TradePageRouteParams }, 'params'>>();
   const { theme } = useTheme();
   // Tab state
-  const [tab, setTab] = useState<'swap' | 'p2p' | 'history'>('swap');
+  // Accept initialTab from navigation params
+  const [tab, setTab] = useState<'swap' | 'p2p' | 'history'>(() => {
+    const initial = route.params?.initialTab;
+    if (initial === 'swap' || initial === 'p2p' || initial === 'history') return initial;
+    return 'swap';
+  });
   // Swap state
-  const [fromCurrency] = useState('USDT');
-  const [toCurrency] = useState('BTC');
+  const [fromCurrency, setFromCurrency] = useState('USDT');
+  const [toCurrency, setToCurrency] = useState('BTC');
   const [amount, setAmount] = useState('');
   const [quote, setQuote] = useState<any>(null);
   const [swapResult, setSwapResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [quidaxId, setQuidaxId] = useState<string | null>(null);
+  const [wallets, setWallets] = useState<any[]>([]);
+  const [walletsLoading, setWalletsLoading] = useState(false);
+  const [showFromModal, setShowFromModal] = useState(false);
+  const [showToModal, setShowToModal] = useState(false);
 
   // Amount currency selector
   const [selectedAmountCurrency, setSelectedAmountCurrency] = useState<'Crypto' | 'NGN' | 'USD'>('Crypto');
 
-  // P2P UI state
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-  const [activeTrade, setActiveTrade] = useState<any | null>(null);
-
-  const navigation = useNavigation<NativeStackNavigationProp<P2PStackParamList>>();
-
-  useEffect(() => {
-    if (selectedOrder && !activeTrade) {
-      navigation.navigate('OrderDetails', { order: selectedOrder });
-      setSelectedOrder(null);
-    }
-  }, [selectedOrder, activeTrade, navigation]);
+  // Handler for selecting an order from P2POffersList
+  const handleSelectOrder = (trade: any) => {
+    navigation.navigate('TradeRoom', { trade });
+  };
 
   // P2P and History dummy state for demo
   const [selectedPair, setSelectedPair] = useState('BTC/USDT');
   const [maxAmount] = useState(10); // Example max amount
 
+  // Fetch user's Quidax ID and wallets on mount
+  useEffect(() => {
+    const fetchQuidaxIdAndWallets = async () => {
+      setLoading(true);
+      setWalletsLoading(true);
+      setError(null);
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) throw new Error('Not authenticated');
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('quidax_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (profileError || !profile || !profile.quidax_id) throw new Error('No Quidax account linked to this user');
+        setQuidaxId(profile.quidax_id);
+        // Fetch wallets with balances > 0
+        const res = await quidax.getWalletsForUser(profile.quidax_id);
+        const walletList = res?.data || [];
+        const filteredWallets = walletList.filter((w: any) => parseFloat(w.balance) > 0);
+        setWallets(filteredWallets);
+        // Debug output
+        console.log('[TradePage] Loaded wallets:', filteredWallets);
+        // Set default from/to if available and always valid
+        if (filteredWallets.length > 0) {
+          setFromCurrency(fc => filteredWallets.find(w => w.currency.toUpperCase() === fc) ? fc : filteredWallets[0].currency.toUpperCase());
+          const toOptions = filteredWallets.filter(w => w.currency.toUpperCase() !== filteredWallets[0].currency.toUpperCase());
+          setToCurrency(tc => toOptions.find(w => w.currency.toUpperCase() === tc) ? tc : (toOptions[0]?.currency.toUpperCase() || filteredWallets[0].currency.toUpperCase()));
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch wallets');
+        setWallets([]);
+      } finally {
+        setLoading(false);
+        setWalletsLoading(false);
+      }
+    };
+    fetchQuidaxIdAndWallets();
+  }, []);
+
   // Handlers
-  const handleGetQuote = () => {
-    setQuote({ rate: '1 BTC = 60,000 USDT', fee: '0.1%', receive: '0.016 BTC' });
+  const handleGetQuote = async () => {
+    setQuote(null);
+    setError(null);
+    setSwapResult(null);
+    if (!quidaxId) {
+      setError('No Quidax account linked.');
+      return;
+    }
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      setError('Enter a valid amount');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await quidax.createSwapQuotation({
+        from_currency: fromCurrency.toLowerCase(),
+        to_currency: toCurrency.toLowerCase(),
+        from_amount: amount,
+      });
+      if (!res || !res.data) throw new Error('No quote returned');
+      // Example response: { data: { rate, fee, receive, id } }
+      setQuote(res.data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch quote');
+    } finally {
+      setLoading(false);
+    }
   };
-  const handleConfirmSwap = () => {
-    setSwapResult({ success: true, message: 'Swap successful!' });
+
+  const handleConfirmSwap = async () => {
+    setSwapResult(null);
+    setError(null);
+    if (!quidaxId) {
+      setError('No Quidax account linked.');
+      return;
+    }
+    if (!quote || !quote.id) {
+      setError('No quote to confirm.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await quidax.confirmSwapQuotation(quote.id);
+      if (res && res.data && res.data.status === 'completed') {
+        setSwapResult({ success: true, message: 'Swap successful!' });
+      } else {
+        setSwapResult({ success: false, message: 'Swap failed. Please try again.' });
+      }
+    } catch (err: any) {
+      setSwapResult({ success: false, message: err.message || 'Swap failed.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,21 +179,103 @@ const TradePage = () => {
       {/* --- Swap Tab --- */}
       {tab === 'swap' && (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
-          <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <View style={[styles.card, { backgroundColor: theme.colors.card, paddingBottom: 18 }]}> 
             <Text style={[styles.label, { color: theme.colors.secondaryText }]}>From</Text>
-            <View style={[styles.input, { backgroundColor: theme.colors.background }]}><Text style={{color: theme.colors.text}}>{fromCurrency}</Text></View>
+            <TouchableOpacity
+              style={[styles.input, { backgroundColor: theme.colors.background, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+              onPress={() => setShowFromModal(true)}
+              disabled={walletsLoading || wallets.length === 0}
+            >
+              <Text style={{ color: theme.colors.text, fontSize: 16 }}>
+                {fromCurrency ? `${fromCurrency}` : (walletsLoading ? 'Loading...' : 'Select currency')}
+              </Text>
+              <Feather name="chevron-down" size={18} color="#6b7280" />
+            </TouchableOpacity>
+            <Modal visible={showFromModal} transparent animationType="slide">
+              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ backgroundColor: '#fff', borderRadius: 10, padding: 18, width: '85%' }}>
+                  <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>Select From Currency</Text>
+                  <FlatList
+                    data={wallets}
+                    keyExtractor={item => item.currency}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={{ paddingVertical: 12, borderBottomWidth: 1, borderColor: '#eee' }}
+                        onPress={() => {
+                          setFromCurrency(item.currency.toUpperCase());
+                          setShowFromModal(false);
+                          // Auto-select different To currency if same
+                          if (item.currency.toUpperCase() === toCurrency) {
+                            const nextTo = wallets.find(w => w.currency.toUpperCase() !== item.currency.toUpperCase())?.currency.toUpperCase();
+                            if (nextTo) setToCurrency(nextTo);
+                          }
+                        }}
+                      >
+                        <Text style={{ fontSize: 16 }}>{item.currency.toUpperCase()} ({parseFloat(item.balance)} {item.currency.toUpperCase()})</Text>
+                      </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={<Text>No wallets found</Text>}
+                  />
+                  <TouchableOpacity onPress={() => setShowFromModal(false)} style={{ marginTop: 10, alignSelf: 'flex-end' }}><Text style={{ color: '#007AFF', fontWeight: 'bold' }}>Close</Text></TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
             <Text style={[styles.label, { color: theme.colors.secondaryText }]}>To</Text>
-            <View style={[styles.input, { backgroundColor: theme.colors.background }]}><Text style={{color: theme.colors.text}}>{toCurrency}</Text></View>
+            <TouchableOpacity
+              style={[styles.input, { backgroundColor: theme.colors.background, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+              onPress={() => setShowToModal(true)}
+              disabled={walletsLoading || wallets.length === 0}
+            >
+              <Text style={{ color: theme.colors.text, fontSize: 16 }}>
+                {toCurrency ? `${toCurrency}` : (walletsLoading ? 'Loading...' : 'Select currency')}
+              </Text>
+              <Feather name="chevron-down" size={18} color="#6b7280" />
+            </TouchableOpacity>
+            <Modal visible={showToModal} transparent animationType="slide">
+              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ backgroundColor: '#fff', borderRadius: 10, padding: 18, width: '85%' }}>
+                  <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>Select To Currency</Text>
+                  <FlatList
+                    data={wallets.filter(w => w.currency.toUpperCase() !== fromCurrency)}
+                    keyExtractor={item => item.currency}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={{ paddingVertical: 12, borderBottomWidth: 1, borderColor: '#eee' }}
+                        onPress={() => {
+                          setToCurrency(item.currency.toUpperCase());
+                          setShowToModal(false);
+                        }}
+                      >
+                        <Text style={{ fontSize: 16 }}>{item.currency.toUpperCase()} ({parseFloat(item.balance)} {item.currency.toUpperCase()})</Text>
+                      </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={<Text>No wallets found</Text>}
+                  />
+                  <TouchableOpacity onPress={() => setShowToModal(false)} style={{ marginTop: 10, alignSelf: 'flex-end' }}><Text style={{ color: '#007AFF', fontWeight: 'bold' }}>Close</Text></TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+            {walletsLoading && (
+              <Text style={{ color: theme.colors.secondaryText, marginBottom: 8 }}>Loading wallets...</Text>
+            )}
+            {!walletsLoading && wallets.length === 0 && (
+              <Text style={{ color: '#e74c3c', marginBottom: 8 }}>No wallets with balance found. Please deposit funds.</Text>
+            )}
+            {fromCurrency && wallets.find(w => w.currency.toUpperCase() === fromCurrency) && (
+              <Text style={{ color: theme.colors.secondaryText, fontSize: 13, marginBottom: 4 }}>
+                Balance: {parseFloat(wallets.find(w => w.currency.toUpperCase() === fromCurrency)?.balance || '0')} {fromCurrency}
+              </Text>
+            )}
             <Text style={[styles.label, { color: theme.colors.secondaryText }]}>Amount</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text }]}
+              style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text, marginBottom: 12 }]}
               value={amount}
               onChangeText={setAmount}
               keyboardType="numeric"
               placeholder="Enter amount"
               placeholderTextColor={theme.colors.secondaryText}
             />
-            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', marginBottom: 12 }}>
               {(['Crypto', 'NGN', 'USD'] as Array<'Crypto' | 'NGN' | 'USD'>).map(option => (
                 <TouchableOpacity
                   key={option}
@@ -108,16 +292,19 @@ const TradePage = () => {
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity style={[styles.greenBtn, { backgroundColor: theme.colors.brandGreen }]} onPress={handleGetQuote}>
-              <Text style={styles.greenBtnText}>Get Quote</Text>
+            <TouchableOpacity style={[styles.greenBtn, { backgroundColor: theme.colors.brandGreen }]} onPress={handleGetQuote} disabled={loading}>
+              <Text style={styles.greenBtnText}>{loading ? 'Loading...' : 'Get Quote'}</Text>
             </TouchableOpacity>
+            {error && (
+              <Text style={{ color: '#e74c3c', marginTop: 8 }}>{error}</Text>
+            )}
             {quote && (
               <View style={[styles.quoteBox, { backgroundColor: theme.colors.card }]}> 
-                <Text style={[styles.quoteText, { color: theme.colors.text }]}>{quote.rate}</Text>
+                <Text style={[styles.quoteText, { color: theme.colors.text }]}>Rate: {quote.rate || `${amount} ${fromCurrency} → ${quote.receive} ${toCurrency}`}</Text>
                 <Text style={[styles.quoteText, { color: theme.colors.text }]}>Fee: {quote.fee}</Text>
-                <Text style={[styles.quoteText, { color: theme.colors.text }]}>You receive: {quote.receive}</Text>
-                <TouchableOpacity style={[styles.greenBtn, { backgroundColor: theme.colors.brandGreen }]} onPress={handleConfirmSwap}>
-                  <Text style={styles.greenBtnText}>Confirm Swap</Text>
+                <Text style={[styles.quoteText, { color: theme.colors.text }]}>You receive: {quote.receive} {toCurrency}</Text>
+                <TouchableOpacity style={[styles.greenBtn, { backgroundColor: theme.colors.brandGreen }]} onPress={handleConfirmSwap} disabled={loading}>
+                  <Text style={styles.greenBtnText}>{loading ? 'Processing...' : 'Confirm Swap'}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -131,7 +318,7 @@ const TradePage = () => {
       {/* --- P2P Tab --- */}
       {tab === 'p2p' && (
         <View style={{ flex: 1 }}>
-          <P2POffersList onSelectOrder={setSelectedOrder} />
+          <P2POffersList onSelectOrder={handleSelectOrder} />
         </View>
       )}
 
@@ -142,11 +329,6 @@ const TradePage = () => {
           <Text style={{ color: theme.colors.secondaryText, textAlign: 'center', marginTop: 10 }}>No trades yet.</Text>
           <Text style={{ color: theme.colors.secondaryText, marginTop: 8 }}>Your recent swaps and trades will appear here.</Text>
         </View>
-      )}
-
-      {/* --- Trade Room Modal --- */}
-      {activeTrade && (
-        <TradeRoom trade={activeTrade} onBack={() => setActiveTrade(null)} />
       )}
     </View>
   );

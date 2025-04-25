@@ -9,7 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from 'react-native-toast-notifications';
 import { supabase } from "@/lib/supabase";
 
 const HEADER_HEIGHT = 56;
@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { theme, setThemeName } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const { user, signOut } = useAuth();
-  const { toast } = useToast();
+  const toast = useToast();
 
   // Helper to check if a menu item is active
   const isActive = (name: string) => route.name === name;
@@ -37,14 +37,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: 'Contact', icon: 'mail', label: 'Contact', route: 'Contact' },
     { name: 'TradeGuide', icon: 'book', label: 'Trade Guide', route: 'TradeGuide' }, // Always show Trade Guide
     { name: 'Calculator', icon: 'cpu', label: 'Calculator', route: 'Calculator' },
+    { name: 'KycIntro', icon: 'user-check', label: 'KYC Intro', route: 'KycIntro' },
   ];
   const AUTH_MENU = [
     { name: 'Dashboard', icon: 'grid', label: 'Dashboard', route: 'Dashboard' },
     { name: 'Wallet', icon: 'credit-card', label: 'Wallet', route: 'Wallet' },
     { name: 'Trade', icon: 'repeat', label: 'Trade', route: 'Trade' },
     { name: 'Profile', icon: 'user', label: 'Profile', route: 'Profile' },
-    { name: 'KycIntro', icon: 'user-check', label: 'KYC Intro', route: 'KycIntro' },
-    { name: 'KycVerification', icon: 'user-check', label: 'KYC Verification', route: 'KycVerification' }
+    { name: 'KycVerification', icon: 'user-check', label: 'KYC Verification', route: 'KycVerification' },
   ];
   // Show all public pages, then append auth pages after sign in (no duplicates)
   const menuToShow = user ? [...PUBLIC_MENU, ...AUTH_MENU] : PUBLIC_MENU;
@@ -57,22 +57,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         onPress={() => {
           setShowMenu(false);
           if (!user && AUTH_MENU.some(auth => auth.route === item.route)) {
-            toast({
-              title: 'Sign in required',
-              description: 'Please sign in to access this page.',
-              variant: 'destructive',
-            });
+            toast.show('Sign in required: Please sign in to access this page.', { type: 'danger' });
             return;
           }
           if (!isActive(item.route)) {
             try {
               navigation.navigate(item.route as never);
             } catch (err: any) {
-              toast({
-                title: 'Navigation error',
-                description: err?.message || 'Could not navigate to page.',
-                variant: 'destructive',
-              });
+              toast.show('Navigation error: ' + (err?.message || 'Could not navigate to page.'), { type: 'danger' });
             }
           }
         }}
@@ -90,17 +82,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           try {
             await signOut();
             setShowMenu(false);
-            toast({
-              title: 'Goodbye!',
-              description: 'You have been signed out.',
-            });
+            toast.show('Goodbye!', { type: 'success' });
             navigation.reset({ index: 0, routes: [{ name: 'Home' as never }] });
           } catch (err: any) {
-            toast({
-              title: 'Sign out failed',
-              description: err?.message || 'Could not sign out.',
-              variant: 'destructive',
-            });
+            toast.show('Sign out failed: ' + (err?.message || 'Could not sign out.'), { type: 'danger' });
             console.error('[AppLayout] Error signing out:', err);
           }
         }}

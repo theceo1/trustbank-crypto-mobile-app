@@ -2,18 +2,18 @@
 import React, { useState } from 'react';
 import { View, Text, Button, TextInput, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { useRoute } from '@react-navigation/native';
-import type { RouteProp } from '@react-navigation/native';
-import type { P2PStackParamList } from '../App';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import BottomNavigation from '../components/BottomNavigation';
 
-type TradeRoomProps = {
+type TradeRoomRouteParams = {
   trade: any;
-  onBack: () => void;
 };
 
-const TradeRoom: React.FC<TradeRoomProps> = ({ trade, onBack }) => {
+const TradeRoom = () => {
+  const navigation = useNavigation();
+  const route = useRoute<RouteProp<{ params: TradeRoomRouteParams }, 'params'>>();
+  const trade = route.params?.trade;
   const { theme } = useTheme();
   // Defensive fallback for trade
   const safeTrade = trade || {};
@@ -60,6 +60,7 @@ const TradeRoom: React.FC<TradeRoomProps> = ({ trade, onBack }) => {
         <Text style={{ fontSize: 15, color: theme.colors.secondaryText, textAlign: 'center' }}>
           Manage your active trade. Upload payment proof, confirm, or dispute.
         </Text>
+        <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
       {/* Trade Summary Card */}
       <View style={styles.summaryCardWrapper}>
