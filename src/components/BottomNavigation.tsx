@@ -16,7 +16,7 @@ const BottomNavigation: React.FC = () => {
   const backgroundColor = theme.colors.background === '#101522' ? '#181c2f' : '#fff';
   const borderTopColor = theme.colors.background === '#101522' ? '#22263a' : '#e5e7eb';
   const inactiveColor = theme.colors.background === '#101522' ? '#a3aed6' : '#6b7280';
-  const activeColor = "#10b981";
+  const activeColor = "#059669";
 
   const publicNavItems = [
     { name: "Home", icon: "home", route: "Home" },

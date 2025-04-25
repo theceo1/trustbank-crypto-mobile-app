@@ -58,7 +58,8 @@ function AuthNavigator() {
   if (isLoading) return null;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName="Index" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Index" children={() => <Index />} />
       <Stack.Screen name="TradeGuide" children={() => <AppLayout><TradeGuidePage /></AppLayout>} />
       {user ? (
         <>
@@ -86,7 +87,7 @@ function AuthNavigator() {
       ) : (
         <>
           {/* Public screens only */}
-          <Stack.Screen name="Index" children={() => <AppLayout><Index /></AppLayout>} />
+
           <Stack.Screen name="Login" children={() => <AppLayout><Login /></AppLayout>} />
           <Stack.Screen name="Signup" children={() => <AppLayout><Signup /></AppLayout>} />
           <Stack.Screen name="Market" children={() => <AppLayout><MarketPage /></AppLayout>} />
@@ -95,7 +96,6 @@ function AuthNavigator() {
           <Stack.Screen name="Vision" children={() => <AppLayout><VisionScreen /></AppLayout>} />
           <Stack.Screen name="FAQ" children={() => <AppLayout><FAQScreen /></AppLayout>} />
           <Stack.Screen name="Contact" children={() => <AppLayout><ContactScreen /></AppLayout>} />
-          <Stack.Screen name="TradeGuide" children={() => <AppLayout><TradeGuidePage /></AppLayout>} />
         </>
       )}
     </Stack.Navigator>

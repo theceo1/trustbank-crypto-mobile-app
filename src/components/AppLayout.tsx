@@ -28,6 +28,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Define menu items array
   const PUBLIC_MENU = [
+    { name: 'Home', icon: 'home', label: 'Home', route: 'Home' },
     { name: 'Market', icon: 'bar-chart-2', label: 'Market Page', route: 'Market' },
     { name: 'Blog', icon: 'book-open', label: 'Blog', route: 'Blog' },
     { name: 'Mission', icon: 'globe', label: 'Mission', route: 'Mission' },
@@ -35,6 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: 'FAQ', icon: 'help-circle', label: 'FAQ', route: 'FAQ' },
     { name: 'Contact', icon: 'mail', label: 'Contact', route: 'Contact' },
     { name: 'TradeGuide', icon: 'book', label: 'Trade Guide', route: 'TradeGuide' }, // Always show Trade Guide
+    { name: 'Calculator', icon: 'cpu', label: 'Calculator', route: 'Calculator' },
   ];
   const AUTH_MENU = [
     { name: 'Dashboard', icon: 'grid', label: 'Dashboard', route: 'Dashboard' },
@@ -42,12 +44,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: 'Trade', icon: 'repeat', label: 'Trade', route: 'Trade' },
     { name: 'Profile', icon: 'user', label: 'Profile', route: 'Profile' },
     { name: 'KycIntro', icon: 'user-check', label: 'KYC Intro', route: 'KycIntro' },
-    { name: 'KycVerification', icon: 'user-check', label: 'KYC Verification', route: 'KycVerification' },
-    { name: 'VerificationPending', icon: 'clock', label: 'Verification Pending', route: 'VerificationPending' },
-    { name: 'Calculator', icon: 'cpu', label: 'Calculator', route: 'Calculator' },
-    { name: 'TradeGuide', icon: 'book', label: 'Trade Guide', route: 'TradeGuide' }, // Always show Trade Guide
+    { name: 'KycVerification', icon: 'user-check', label: 'KYC Verification', route: 'KycVerification' }
   ];
-  const menuToShow = user ? [...AUTH_MENU, ...PUBLIC_MENU] : PUBLIC_MENU;
+  // Show all public pages, then append auth pages after sign in (no duplicates)
+  const menuToShow = user ? [...PUBLIC_MENU, ...AUTH_MENU] : PUBLIC_MENU;
   const menuItems = [
     ...menuToShow.map(item => (
       <TouchableOpacity
