@@ -1,73 +1,97 @@
-# Welcome to your Lovable project
+# trustBank Mobile App
 
-## Project info
+[![Platform](https://img.shields.io/badge/platform-React%20Native-blue)](https://reactnative.dev/) [![Language](https://img.shields.io/badge/languages-TypeScript%2097%25%2C%20CSS%200.8%25%2C%20Ruby%200.7%25%2C%20JavaScript%200.6%25%2C%20Objective--C%2B%2B%200.5%25%2C%20HTML%200.3%25%2C%20Other%200.1%25-brightgreen)](https://github.com/theceo1/trustbank-mobile/search?l=typescript)
 
-**URL**: https://lovable.dev/projects/19e3d089-4ab9-44f8-adef-aa2a4456562f
+> **trustBank Mobile** — the companion app for the trustBank crypto-first neobank, built to make sending, receiving, and converting cryptocurrency as intuitive as sending a text message.
 
-## How can I edit this code?
+## 🚀 Project Overview
 
-There are several ways of editing your application.
+trustBank Mobile is the open source React Native application that powers trustBank’s crypto to fiat and fiat to crypto flows on iOS. It features:
 
-**Use Lovable**
+- **Instant Onboarding** — 90-second KYC.
+- **Multi-Asset Wallets** — 85+ cryptocurrencies (BTC, ETH, USDT, XRP, SOL, NGN and more).  
+- **Seamless Conversion** — swap crypto to Naira (and vice versa) in two taps.  
+- **Robust Security** — built in encryption, biometrics, and secure storage.  
+- **Clean, Accessible UI** — powered by shadcn-ui and Tailwind CSS.  
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/19e3d089-4ab9-44f8-adef-aa2a4456562f) and start prompting.
+Explore the live app in the App Store soon, or demo it now in Expo.
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📦 Built With
 
-**Use your preferred IDE**
+- [Vite](https://vitejs.dev/)  
+- [TypeScript](https://www.typescriptlang.org/)  
+- [React](https://reactjs.org/) & [React Native](https://reactnative.dev/)  
+- [Expo](https://expo.dev/)  
+- [shadcn-ui](https://github.com/shadcn/ui)  
+- [Tailwind CSS](https://tailwindcss.com/)  
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Code Quality: ESLint, Prettier
+CI/CD: GitHub Actions
+Testing: Jest, React Native Testing Library
 
-Follow these steps:
+🔧 Getting Started
+      Prerequisites
+Node.js ≥ 14
+npm or Yarn
+Expo CLI (npm install -g expo-cli)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Installation
+1. Clone the repo
+  git clone https://github.com/theceo1/trustbank-mobile.git
+  cd trustbank-mobile
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. Install dependencies
+  
+       npm install
+        # or
+        yarn install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+3. Configure environment
+  Copy .env.example to .env and fill in your crypto, fiat, KYC/AML and supabase credentials.
 
-**Edit a file directly in GitHub**
+4. Run in Expo
+   expo start
+   
+Scan the QR code with the Expo Go app (iOS/Android) or launch an emulator.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
 
-**Use GitHub Codespaces**
+📱 Usage
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+    Sign Up / Log In: Complete KYC in under 90 seconds.
+    Dashboard: See your wallet balances and recent transactions.
+    Convert: Tap “Convert” → select asset → enter amount → confirm.
+    Send / Receive: Generate QR codes or addresses to send crypto instantly.
+    Security Settings: Enable biometrics, 2FA, and lockouts.
+    
+  Screenshots, demos, and video walkthroughs are available at https://www.trustbank.tech.
 
-## What technologies are used for this project?
+🤝 Contributing
 
-This project is built with:
+    Fork this repository.
+    Create your feature branch (git checkout -b feature/my-feature).
+    Commit your changes (git commit -m 'Add my feature').
+    Push to your branch (git push origin feature/my-feature).
+    Open a pull request — we’ll review, provide feedback, and merge!.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+🛡️ Security
+    
+    All sensitive data is encrypted at rest.
+    Biometric authentication options (FaceID/TouchID).
+    Regular dependency audits via GitHub Dependabot.
 
-## How can I deploy this project?
+📄 License
 
-Simply open [Lovable](https://lovable.dev/projects/19e3d089-4ab9-44f8-adef-aa2a4456562f) and click on Share -> Publish.
+   This project is licensed under the MIT License.
 
-## Can I connect a custom domain to my Lovable project?
+## 📊 Languages & Tools
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```text
+TypeScript      97.0%
+CSS              0.8%
+Ruby             0.7%
+JavaScript       0.6%
+Objective-C++    0.5%
+HTML             0.3%
+Other            0.1%)
