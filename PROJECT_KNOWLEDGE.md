@@ -37,20 +37,20 @@ The trustBank mobile app is a cryptocurrency ecosystem designed for emerging mar
 
 ## API Integrations
 ### 1. Supabase
-- **URL**: https://xkxihvafbyegowhryojd.supabase.co
-- **Public Key**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreGlodmFmYnllZ293aHJ5b2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMzMzMwOTgsImV4cCI6MjA0ODkwOTA5OH0.BbXmFe3-y39l8BENL8GRdopGYZwd6PNlZYiXnsJfhEE
+- **URL**:
+- **Public Key**: 
 - **Purpose**: Authentication, user data storage, profile management
 
 ### 2. Dojah
-- **API Key**: prod_sk_N3KVhF4urA7ZV7Ck9kNY0kOP4
-- **Public Key**: prod_pk_3AX4R8aiOoZ0WJL0VG8xD8fvL
-- **App ID**: 67391e50e45f5fc4445b4014
+- **API Key**: 
+- **Public Key**:
+- **App ID**: 
 - **API URL**: https://api.dojah.io
 - **Purpose**: KYC verification, identity validation
 
 ### 3. Quidax
-- **Secret Key**: lJ2RF5QlgfS4HB3Bat0wvgqF2xvYKaqaxpO17P9y
-- **Public Key**: wxJ5qUShutXT5hwv98fRLzSJ7MxnrgFwB768zFUL
+- **Secret Key**: 
+- **Public Key**:
 - **API URL**: https://www.quidax.com/api/v1
 - **Purpose**: Wallet management, cryptocurrency transactions
 
