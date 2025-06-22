@@ -17,6 +17,9 @@ import KycVerification from './pages/KycVerification';
 import VerificationPending from './pages/VerificationPending';
 import WalletPage from './pages/WalletPage';
 import TradePage from './pages/TradePage';
+import P2POffersList from './pages/P2POffersList';
+import OrderDetails from './pages/OrderDetails';
+import TradeRoom from './pages/TradeRoom';
 import Dashboard from './pages/Dashboard';  
 
 import CalculatorPage from './pages/CalculatorPage';
@@ -29,6 +32,14 @@ import VisionScreen from './pages/Vision';
 import FAQScreen from './pages/FAQ';
 import ContactScreen from './pages/Contact';
 import AppLayout from './components/AppLayout';
+
+export type P2PStackParamList = {
+  P2POffersList: undefined;
+  OrderDetails: { order: any };
+  TradeRoom: { trade: any };
+};
+
+import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 
 const Stack = createNativeStackNavigator();
 const queryClient = new QueryClient();
@@ -47,7 +58,8 @@ function AuthNavigator() {
   if (isLoading) return null;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName="Index" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Index" children={() => <Index />} />
       <Stack.Screen name="TradeGuide" children={() => <AppLayout><TradeGuidePage /></AppLayout>} />
       {user ? (
         <>
@@ -66,11 +78,16 @@ function AuthNavigator() {
           <Stack.Screen name="Vision" children={() => <AppLayout><VisionScreen /></AppLayout>} />
           <Stack.Screen name="FAQ" children={() => <AppLayout><FAQScreen /></AppLayout>} />
           <Stack.Screen name="Contact" children={() => <AppLayout><ContactScreen /></AppLayout>} />
+
+          {/* P2P Trading Screens */}
+          <Stack.Screen name="P2POffersList" children={() => <AppLayout><P2POffersList /></AppLayout>} />
+          <Stack.Screen name="OrderDetails" component={OrderDetails} />
+          <Stack.Screen name="TradeRoom" component={TradeRoom} />
         </>
       ) : (
         <>
           {/* Public screens only */}
-          <Stack.Screen name="Index" children={() => <AppLayout><Index /></AppLayout>} />
+
           <Stack.Screen name="Login" children={() => <AppLayout><Login /></AppLayout>} />
           <Stack.Screen name="Signup" children={() => <AppLayout><Signup /></AppLayout>} />
           <Stack.Screen name="Market" children={() => <AppLayout><MarketPage /></AppLayout>} />
@@ -79,7 +96,6 @@ function AuthNavigator() {
           <Stack.Screen name="Vision" children={() => <AppLayout><VisionScreen /></AppLayout>} />
           <Stack.Screen name="FAQ" children={() => <AppLayout><FAQScreen /></AppLayout>} />
           <Stack.Screen name="Contact" children={() => <AppLayout><ContactScreen /></AppLayout>} />
-          <Stack.Screen name="TradeGuide" children={() => <AppLayout><TradeGuidePage /></AppLayout>} />
         </>
       )}
     </Stack.Navigator>

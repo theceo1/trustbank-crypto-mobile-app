@@ -1,361 +1,195 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Button from "@/components/ui/button";
-import { useToast } from "@/components/ui/toast";
+import { useToast } from 'react-native-toast-notifications';
 import { useAuth } from "@/contexts/AuthContext";
 import { Picker } from '@react-native-picker/picker';
 import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
-const KycVerification = ({ navigation }: any) => {
-  const { theme } = useTheme();
-  const { showToast } = useToast();
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("id-verification");
-  const [idType, setIdType] = useState("passport");
-  const [loading, setLoading] = useState(false);
+import { supabase } from '@/lib/supabase';
+import { ActivityIndicator } from 'react-native';
 
-  // Mock verification states
-  const [selfieUploaded, setSelfieUploaded] = useState(false);
-  const [frontUploaded, setFrontUploaded] = useState(false);
-  const [backUploaded, setBackUploaded] = useState(false);
-  const [addressUploaded, setAddressUploaded] = useState(false);
+const KYC_TIERS = [
+  {
+    key: 'TIER_1',
+    name: 'Basic',
+    icon: 'shield',
+    requirements: ['email', 'basic_info', 'phone'],
+    features: ['Basic trading features', 'Limited trading volume', 'Basic support'],
+    dailyLimit: 100,
+    monthlyLimit: 1000,
+    withdrawalLimit: 200,
+  },
+  {
+    key: 'TIER_2',
+    name: 'Starter',
+    icon: 'star',
+    requirements: ['nin', 'selfie'],
+    features: ['Increased trading limits', 'P2P trading access', 'Priority support'],
+    dailyLimit: 500,
+    monthlyLimit: 5000,
+    withdrawalLimit: 1000,
+  },
+  {
+    key: 'TIER_3',
+    name: 'Intermediate',
+    icon: 'arrow-up-down',
+    requirements: ['bvn'],
+    features: ['Higher trading limits', 'OTC trading access', 'Dedicated support line'],
+    dailyLimit: 2000,
+    monthlyLimit: 20000,
+    withdrawalLimit: 5000,
+  },
+  {
+    key: 'TIER_4',
+    name: 'Advanced',
+    icon: 'lock',
+    requirements: ['livecheck'],
+    features: ['Premium trading features', 'VIP support', 'Advanced market tools'],
+    dailyLimit: 10000,
+    monthlyLimit: 100000,
+    withdrawalLimit: 20000,
+  },
+  {
+    key: 'TIER_5',
+    name: 'Premium',
+    icon: 'crown',
+    requirements: ['government_id', 'passport'],
+    features: ['Unlimited trading', 'Institutional features', 'Dedicated account manager'],
+    dailyLimit: 50000,
+    monthlyLimit: 500000,
+    withdrawalLimit: 100000,
+  },
+];
 
-  // Handle document type selection
-  const handleIdTypeChange = (itemValue: string) => {
-    setIdType(itemValue);
-  };
-
-  // Mock file upload handler
-  const handleFileUpload = (type: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      switch(type) {
-        case "selfie": setSelfieUploaded(true); break;
-        case "front": setFrontUploaded(true); break;
-        case "back": setBackUploaded(true); break;
-        case "address": setAddressUploaded(true); break;
-      }
-      showToast({
-        title: "File uploaded",
-        description: "Your document has been uploaded successfully.",
-      });
-    }, 1500);
-  };
-
-  // Submit verification
-  const handleSubmitVerification = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      if (navigation && navigation.navigate) {
-        navigation.navigate("VerificationPending");
-      }
-    }, 1500);
-  };
-
-  // Check if all required documents are uploaded
-  const isVerificationComplete = () => {
-    if (activeTab === "id-verification") {
-      return selfieUploaded && frontUploaded && (idType === "national_id" ? backUploaded : true);
-    } else {
-      return addressUploaded;
-    }
-  };
-
-  return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBack} onPress={() => navigation && navigation.goBack ? navigation.goBack() : null}>
-          <Feather name="chevron-left" size={26} color="#3949ab" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Identity Verification</Text>
-      </View>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }}>
-        {/* Title */}
-        <Text style={styles.pageTitle}>Complete KYC Verification</Text>
-        <Text style={styles.pageSubtitle}>
-          Please upload clear photos of your identification documents and proof of address.
-        </Text>
-        {/* Tabs */}
-        <View style={styles.tabsRow}>
-          <TouchableOpacity
-            style={[styles.tabBtn, activeTab === 'id-verification' && styles.tabBtnActive]}
-            onPress={() => setActiveTab('id-verification')}
-          >
-            <Text style={[styles.tabBtnText, activeTab === 'id-verification' && styles.tabBtnTextActive]}>Identity</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tabBtn, activeTab === 'address-verification' && styles.tabBtnActive]}
-            onPress={() => setActiveTab('address-verification')}
-          >
-            <Text style={[styles.tabBtnText, activeTab === 'address-verification' && styles.tabBtnTextActive]}>Address</Text>
-          </TouchableOpacity>
-        </View>
-        {/* Tab Content */}
-        {activeTab === 'id-verification' && (
-          <View>
-            {/* Document Type Selection */}
-            <View style={styles.card}>
-              <Text style={styles.label}>Select ID Type</Text>
-              <View style={styles.pickerWrap}>
-                <Picker
-                  selectedValue={idType}
-                  onValueChange={handleIdTypeChange}
-                  style={styles.picker}
-                  itemStyle={{ fontSize: 15 }}
-                >
-                  <Picker.Item label="Passport" value="passport" />
-                  <Picker.Item label="Driver's License" value="drivers_license" />
-                  <Picker.Item label="National ID Card" value="national_id" />
-                </Picker>
-              </View>
-            </View>
-            {/* Selfie Upload */}
-            <View style={styles.card}>
-              <View style={styles.cardRow}>
-                <View>
-                  <Text style={styles.cardTitle}>Selfie Verification</Text>
-                  <Text style={styles.cardDesc}>Take a clear photo of yourself</Text>
-                </View>
-                {selfieUploaded && <Feather name="check" size={20} color="#4caf50" />}
-              </View>
-              <View style={styles.btnRow}>
-                <Button style={styles.uploadBtn} onPress={() => handleFileUpload('selfie')} disabled={loading || selfieUploaded}>
-                  <Feather name="camera" size={16} color="#3949ab" style={{ marginRight: 6 }} />
-                  <Text style={styles.uploadBtnText}>Take Photo</Text>
-                </Button>
-                <Button style={styles.uploadBtn} onPress={() => handleFileUpload('selfie')} disabled={loading || selfieUploaded}>
-                  <Feather name="upload" size={16} color="#3949ab" style={{ marginRight: 6 }} />
-                  <Text style={styles.uploadBtnText}>Upload</Text>
-                </Button>
-              </View>
-            </View>
-            {/* Front of ID Upload */}
-            <View style={styles.card}>
-              <View style={styles.cardRow}>
-                <View>
-                  <Text style={styles.cardTitle}>{idType === 'passport' ? 'Passport' : 'ID Card'} (Front)</Text>
-                  <Text style={styles.cardDesc}>Upload a clear photo of the front of your {idType.replace('_', ' ')}</Text>
-                </View>
-                {frontUploaded && <Feather name="check" size={20} color="#4caf50" />}
-              </View>
-              <View style={styles.btnRow}>
-                <Button style={styles.uploadBtn} onPress={() => handleFileUpload('front')} disabled={loading || frontUploaded}>
-                  <Feather name="camera" size={16} color="#3949ab" style={{ marginRight: 6 }} />
-                  <Text style={styles.uploadBtnText}>Take Photo</Text>
-                </Button>
-                <Button style={styles.uploadBtn} onPress={() => handleFileUpload('front')} disabled={loading || frontUploaded}>
-                  <Feather name="upload" size={16} color="#3949ab" style={{ marginRight: 6 }} />
-                  <Text style={styles.uploadBtnText}>Upload</Text>
-                </Button>
-              </View>
-            </View>
-            {/* Back of ID Upload (only for IDs, not passport) */}
-            {idType !== 'passport' && (
-              <View style={styles.card}>
-                <View style={styles.cardRow}>
-                  <View>
-                    <Text style={styles.cardTitle}>ID Card (Back)</Text>
-                    <Text style={styles.cardDesc}>Upload a clear photo of the back of your {idType.replace('_', ' ')}</Text>
-                  </View>
-                  {backUploaded && <Feather name="check" size={20} color="#4caf50" />}
-                </View>
-                <View style={styles.btnRow}>
-                  <Button style={styles.uploadBtn} onPress={() => handleFileUpload('back')} disabled={loading || backUploaded}>
-                    <Feather name="camera" size={16} color="#3949ab" style={{ marginRight: 6 }} />
-                    <Text style={styles.uploadBtnText}>Take Photo</Text>
-                  </Button>
-                  <Button style={styles.uploadBtn} onPress={() => handleFileUpload('back')} disabled={loading || backUploaded}>
-                    <Feather name="upload" size={16} color="#3949ab" style={{ marginRight: 6 }} />
-                    <Text style={styles.uploadBtnText}>Upload</Text>
-                  </Button>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
-        {activeTab === 'address-verification' && (
-          <View>
-            <View style={styles.card}>
-              <View style={styles.cardRow}>
-                <View>
-                  <Text style={styles.cardTitle}>Proof of Address</Text>
-                  <Text style={styles.cardDesc}>Upload a utility bill, bank statement, or official letter (not older than 3 months)</Text>
-                </View>
-                {addressUploaded && <Feather name="check" size={20} color="#4caf50" />}
-              </View>
-              <View style={styles.btnRow}>
-                <Button style={styles.uploadBtn} onPress={() => handleFileUpload('address')} disabled={loading || addressUploaded}>
-                  <Feather name="camera" size={16} color="#3949ab" style={{ marginRight: 6 }} />
-                  <Text style={styles.uploadBtnText}>Take Photo</Text>
-                </Button>
-                <Button style={styles.uploadBtn} onPress={() => handleFileUpload('address')} disabled={loading || addressUploaded}>
-                  <Feather name="upload" size={16} color="#3949ab" style={{ marginRight: 6 }} />
-                  <Text style={styles.uploadBtnText}>Upload</Text>
-                </Button>
-              </View>
-            </View>
-            <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: '#ffe082' }]}> 
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                <Feather name="alert-triangle" size={20} color="#ff9800" style={{ marginTop: 2, marginRight: 10 }} />
-                <Text style={[styles.cardDesc, { color: '#b8860b', flex: 1 }]}>The document must clearly show your full name, current address, and issue date (within the last 3 months).</Text>
-              </View>
-            </View>
-          </View>
-        )}
-        {/* Submit Button */}
-        <View style={{ marginTop: 32, marginBottom: 32 }}>
-          <Button
-            style={styles.submitBtn}
-            onPress={handleSubmitVerification}
-            disabled={!isVerificationComplete() || loading}
-          >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Submit Verification</Text>}
-          </Button>
-        </View>
-      </ScrollView>
-    </View>
-  );
+const KYC_LABELS = {
+  email: 'Email Verification',
+  phone: 'Phone Number Verification',
+  basic_info: 'Basic Personal Information',
+  nin: 'NIN Verification',
+  bvn: 'BVN Verification',
+  livecheck: 'LiveCheck Verification',
+  government_id: 'Government-issued ID',
+  passport: 'International Passport',
+  selfie: 'Selfie Verification',
 };
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    marginBottom: 18,
-    shadowColor: '#3949ab',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 4,
-  },
-  cardDesc: {
-    fontSize: 14,
-    color: '#5c5e6b',
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    color: '#222',
-  },
-  pickerWrap: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    marginBottom: 12,
-    backgroundColor: '#fff',
-  },
-  picker: {
-    height: 44,
-    width: '100%',
-  },
-  btnRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 10,
-  },
-  uploadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#03a9f4',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginHorizontal: 2,
-  },
-  uploadBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  submitBtn: {
-    backgroundColor: '#3949ab',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  submitBtnText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 18,
-    paddingBottom: 12,
-    paddingHorizontal: 18,
-    
-    borderBottomWidth: 1,
-    borderBottomColor: '#ececec',
-  },
-  headerBack: {
-    padding: 4,
-    marginRight: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a237e',
-  },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1a237e',
-    marginBottom: 6,
-    marginTop: 10,
-    textAlign: 'left',
-  },
-  pageSubtitle: {
-    color: '#666',
-    fontSize: 15,
-    marginBottom: 22,
-    textAlign: 'left',
-  },
-  tabsRow: {
-    flexDirection: 'row',
-    marginBottom: 18,
-    backgroundColor: '#e8eaf6',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  tabBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  tabBtnActive: {
-    backgroundColor: '#3949ab',
-  },
-  tabBtnText: {
-    color: '#3949ab',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  tabBtnTextActive: {
-    color: '#fff',
-  },
-});
+import React from 'react';
+
+const KycVerification = ({ navigation }: any) => {
+  const { theme } = useTheme();
+  const toast = useToast();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [verificationStatus, setVerificationStatus] = useState<any>({});
+
+  // Fetch verification status from Supabase
+  React.useEffect(() => {
+    const fetchStatus = async () => {
+      setLoading(true);
+      try {
+        const { data: { user: supaUser } } = await supabase.auth.getUser();
+        if (!supaUser) {
+          setLoading(false);
+          return;
+        }
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('verification_history')
+          .eq('user_id', supaUser.id)
+          .single();
+        if (error) {
+          toast.show('Failed to fetch verification status', { type: 'danger' });
+          setLoading(false);
+          return;
+        }
+        setVerificationStatus(profile?.verification_history || {});
+      } catch (err) {
+        toast.show('Error fetching KYC status', { type: 'danger' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStatus();
+  }, []);
+  const [activeTab, setActiveTab] = useState("id-verification");
+  const [idType, setIdType] = useState("passport");
+
+  // Helper: Check if previous tier is complete
+  const isPreviousTierComplete = (tierIndex: number) => {
+    if (tierIndex === 0) return true;
+    const prevTier = KYC_TIERS[tierIndex - 1];
+    return prevTier.requirements.every(req => verificationStatus[req]);
+  };
+
+  // Helper: Calculate progress for a tier
+  const getTierProgress = (tier) => {
+    const total = tier.requirements.length;
+    const completed = tier.requirements.filter(req => verificationStatus[req]).length;
+    return { completed, total, percent: Math.round((completed / total) * 100) };
+  };
+
+  // UI rendering
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+        <Text style={{ color: theme.colors.text, marginBottom: 12 }}>Loading your KYC status...</Text>
+        <ActivityIndicator size="large" color="#4caf50" />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ padding: 20 }}>
+      <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.colors.text, marginBottom: 10 }}>KYC Verification Tiers</Text>
+      {KYC_TIERS.map((tier, idx) => {
+        const progress = getTierProgress(tier);
+        const prevComplete = isPreviousTierComplete(idx);
+        return (
+          <View key={tier.key} style={{ marginBottom: 28, borderRadius: 12, backgroundColor: theme.colors.card, padding: 16, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <Feather name={tier.icon as any} size={22} color={progress.percent === 100 ? '#4caf50' : '#3949ab'} style={{ marginRight: 8 }} />
+              <Text style={{ fontSize: 18, fontWeight: '600', color: theme.colors.text }}>{tier.name}</Text>
+              {progress.percent === 100 && <Text style={{ marginLeft: 8, color: '#4caf50', fontWeight: 'bold' }}>(Completed)</Text>}
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+              <Text style={{ fontSize: 14, color: theme.colors.text }}>Progress: {progress.completed}/{progress.total}</Text>
+              <Text style={{ fontSize: 14, color: theme.colors.text }}>{progress.percent}%</Text>
+            </View>
+            <View style={{ height: 7, backgroundColor: '#eee', borderRadius: 4, marginBottom: 10 }}>
+              <View style={{ height: 7, width: `${progress.percent}%`, backgroundColor: progress.percent === 100 ? '#4caf50' : '#3949ab', borderRadius: 4 }} />
+            </View>
+            <Text style={{ fontWeight: '600', marginBottom: 4, color: theme.colors.text }}>Requirements:</Text>
+            {tier.requirements.map(req => (
+              <View key={req} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <Feather name={verificationStatus[req] ? 'check-circle' : 'clock'} size={16} color={verificationStatus[req] ? '#4caf50' : '#fbbf24'} style={{ marginRight: 6 }} />
+                <Text style={{ color: verificationStatus[req] ? '#4caf50' : theme.colors.text }}>{KYC_LABELS[req]}</Text>
+                {!verificationStatus[req] && (
+                  <TouchableOpacity
+                    disabled={!prevComplete}
+                    style={{ marginLeft: 10, backgroundColor: prevComplete ? '#3949ab' : '#ccc', borderRadius: 6, paddingVertical: 3, paddingHorizontal: 12 }}
+                    onPress={() => toast.show('Start verification for ' + KYC_LABELS[req], { type: 'info' })}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 13 }}>{prevComplete ? 'Verify' : 'Locked'}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+            <Text style={{ fontWeight: '600', marginTop: 10, color: theme.colors.text }}>Features:</Text>
+            {tier.features.map(feature => (
+              <Text key={feature} style={{ color: '#666', marginLeft: 8, marginBottom: 2 }}>• {feature}</Text>
+            ))}
+            <Text style={{ fontWeight: '600', marginTop: 10, color: theme.colors.text }}>Trading Limits:</Text>
+            <Text style={{ color: theme.colors.text, marginLeft: 8 }}>Daily: ${tier.dailyLimit.toLocaleString()}</Text>
+            <Text style={{ color: theme.colors.text, marginLeft: 8 }}>Monthly: ${tier.monthlyLimit.toLocaleString()}</Text>
+            <Text style={{ color: theme.colors.text, marginLeft: 8, marginBottom: 2 }}>Withdrawal: ${tier.withdrawalLimit.toLocaleString()}</Text>
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+};
 
 export default KycVerification;
 
